@@ -1,34 +1,48 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
+/* =========================
+   Theme Tokens (v4 way)
+   ========================= */
+@theme {
+  --color-olympus-dark: #0f0f1a;
+  --color-olympus-blood: #8b0000;
+  --color-olympus-purple: #3b1c5c;
+  --color-olympus-gold: #d4af37;
+}
+
+/* =========================
+   Base Layer
+   ========================= */
 @layer base {
   body {
     @apply bg-olympus-dark text-white;
   }
 }
 
+/* =========================
+   Component Layer
+   ========================= */
 @layer components {
   .btn {
     @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  
+
   .btn-primary {
     @apply bg-olympus-blood hover:bg-red-700 text-white;
   }
-  
+
   .btn-secondary {
     @apply bg-olympus-purple hover:bg-purple-900 text-white;
   }
-  
+
   .btn-outline {
     @apply border-2 border-olympus-gold text-olympus-gold hover:bg-olympus-gold hover:text-olympus-dark;
   }
-  
+
   .card {
-    @apply bg-gray-900 bg-opacity-80 rounded-xl p-6 border border-gray-700;
+    @apply bg-gray-900/80 rounded-xl p-6 border border-gray-700;
   }
-  
+
   .input {
     @apply w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-lg focus:border-olympus-gold focus:outline-none transition-colors;
   }
