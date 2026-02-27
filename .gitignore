@@ -1,0 +1,5 @@
+# Ignore Node dependencies
+node_modules/
+
+# Ignore Mac system files (just in case a teammate uses a Mac)
+.DS_Store
