@@ -1,1 +1,11 @@
+# Python virtual environments
+venv/
 myenv/
+__pycache__/
+*.pyc
+
+# Node dependencies
+node_modules/
+
+# Environment variables
+.env

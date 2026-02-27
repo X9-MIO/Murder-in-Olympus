@@ -1,38 +1,29 @@
 @echo off
 echo ==========================================
-echo Setting up Murder in Olympus Project...
+echo Setting up Murder in Olympus...
 echo ==========================================
 
-echo.
-echo [1/3] Setting up Python Backend...
+echo [1/3] Backend (Python)
 cd backend
-:: Check if the virtual environment already exists. If not, make one!
-IF NOT EXIST "myvenv\" (
-    echo Creating new virtual environment (myvenv)...
-    python -m venv myvenv
-)
-:: Activate it and install dependencies
+python -m venv venv
 call venv\Scripts\activate
-echo Installing Python dependencies...
 pip install -r requirements.txt
+call deactivate
 cd ..
 
-echo.
-echo [2/3] Setting up Node Game Server...
+echo [2/3] Game Server (Node)
 cd game-server
-echo Installing game server dependencies...
 call npm install
 cd ..
 
-echo.
-echo [3/3] Setting up Vite Frontend...
+echo [3/3] Frontend (Vite)
 cd frontend
-echo Installing frontend dependencies...
 call npm install
 cd ..
 
-echo.
 echo ==========================================
-echo Setup Complete! All environments and dependencies are ready.
+echo Setup Complete!
 echo ==========================================
+
+
 pause

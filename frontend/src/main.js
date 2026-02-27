@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://192.168.0.9:3000");
+const socket = io(window.location.protocol + "//" + window.location.hostname + ":3000");
 const message = document.getElementById("message");
 
 console.log("Script loaded");

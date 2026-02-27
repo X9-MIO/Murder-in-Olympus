@@ -4,10 +4,10 @@
   "description": "A Werewolf hidden in plain sight\r Can you survive the night?",
   "main": "index.js",
   "scripts": {
-  "start": "concurrently -c \"cyan,magenta,yellow\" -n \"FRONT,GAME,BACK\" \"npm run dev:frontend\" \"npm run dev:game\" \"npm run dev:backend\"",
+  "start": "concurrently -n \"FRONT,GAME,BACK\" -c \"cyan,magenta,yellow\" \"npm run dev:frontend\" \"npm run dev:game\" \"npm run dev:backend\"",
   "dev:frontend": "cd frontend && npm run dev -- --host",
   "dev:game": "cd game-server && node server.js",
-  "dev:backend": "cd backend && venv\\Scripts\\activate && python manage.py runserver 0.0.0.0:8000"
+  "dev:backend": "cd backend && myenv\\Scripts\\activate && python manage.py runserver 0.0.0.0:8000"
 },
   "repository": {
     "type": "git",
