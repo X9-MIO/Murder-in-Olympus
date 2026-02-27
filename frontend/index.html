@@ -1,15 +1,99 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Socket.IO Client</title>
-  </head>
-  <body>
-    <h1>Socket.IO Test</h1>
-    <input type = "text" id = message></input>
-    <button id="join" onclick="">Send message</button>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Join Room</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="page join-page" id="joinpage">
+    <div class="card">
+        <h1>Join Lobby</h1>
+        <p class="subtitle">Enter your name and room code</p>
+
+        <div class="field">
+            <label>Display Name</label>
+            <input type="text" id="displayname" placeholder="Your name">
+        </div>
+
+        <div class="field">
+            <label>Room Code</label>
+            <input type="text" id="roomcode" placeholder="ABC123">
+        </div>
+
+        <button class="primary" id="joinbtn">Join Room</button>
+
+        <div class="alt-action">
+            <span>or</span>
+            <a href="#" id="createroomlink">create a room</a>
+        </div>
+    </div>
+</div>
+
+<div class="page lobby-page hidden" id="lobby">
+    <div class="lobby">
+        <div class="chat-container">
+            <div class="chat-header">Chat</div>
+            <div class="chat-box"></div>
+            <div class="chat-input" id="chat">
+                <input type="text" id="chatInput" placeholder="Type a message...">
+                <button class="primary" id="sendBtn">Send</button>
+            </div>
+        </div>
+
+        <aside class="players">
+            <h3>Players</h3>
+            <ul>
+                <li>Player 1</li>
+                <li>Player 2</li>
+                <li>Player 3</li>
+            </ul>
+        </aside>
+    </div>
+</div>
+
+<div class="page create-room-page hidden" id="createroompage">
+    <div class="card">
+        <h1>Create Room</h1>
+        <p class="subtitle">Set up your lobby</p>
+
+        <div class="field">
+            <label>Room Name</label>
+            <input type="text" id="roomname" placeholder="Room Name">
+        </div>
+
+        <div class="field">
+            <label>Number of Players</label>
+            <select id="playercount">
+                <option value="2">2 players</option>
+                <option value="3">3 players</option>
+                <option value="4">4 players</option>
+                <option value="5">5 players</option>
+                <option value="6">6 players</option>
+                <option value="7">7 players</option>
+                <option value="8">8 players</option>
+                <option value="9">9 players</option>
+                <option value="10">10 players</option>
+                <option value="11">11 players</option>
+                <option value="12">12 players</option>
+                <option value="13">13 players</option>
+                <option value="14">14 players</option>
+                <option value="15">15 players</option>
+            </select>
+        </div>
+
+        <button class="primary" id="createroombtn">Create Room</button>
+
+        <div class="alt-action">
+            <span>or</span>
+            <a href="#" id="joinroomlink">join an existing room</a>
+        </div>
+    </div>
+</div>
 
 
+<script type="module" src="/src/main.js"></script>
 
-    <script type="module" src="/src/main.js"></script>
-  </body>
+</body>
 </html>
