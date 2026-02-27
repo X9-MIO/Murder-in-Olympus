@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Room</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="centered">
+
+<div class="card">
+    <h1>Create Room</h1>
+    <p class="subtitle">Set up your lobby</p>
+
+    <div class="field">
+        <label>Room Name</label>
+        <input type="text" id="roomname" placeholder="Room Name">
+    </div>
+
+    <div class="field">
+        <label>Number of Players</label>
+        <select id="playercount">
+            <option value="2">2 players</option>
+            <option value="3">3 players</option>
+            <option value="4">4 players</option>
+            <option value="5">5 players</option>
+            <option value="6">6 players</option>
+            <option value="8">8 players</option>
+        </select>
+    </div>
+
+    <button class="primary" id="createroombtn">Create Room</button>
+
+    <div class="alt-action">
+        <span>or</span>
+        <a href="/">join an existing room</a>
+    </div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+
+</body>
+</html>

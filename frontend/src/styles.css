@@ -1,0 +1,247 @@
+/* ============================= */
+/* Reset */
+/* ============================= */
+* {
+    box-sizing: border-box;
+}
+
+/* ============================= */
+/* Theme */
+/* ============================= */
+:root {
+    --bg: #0f172a;
+    --panel: #020617;
+    --card: #020617;
+    --border: #1e293b;
+    --text: #e5e7eb;
+    --muted: #94a3b8;
+    --accent: #3b82f6;
+}
+
+/* ============================= */
+/* Base */
+/* ============================= */
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* ============================= */
+/* Page Containers */
+/* ============================= */
+.page {
+    height: 100vh;
+}
+
+/* Join page layout */
+.join-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.create-room-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* Lobby page layout */
+.lobby-page {
+    display: block;
+}
+
+/* ============================= */
+/* Card */
+/* ============================= */
+.card {
+    background: var(--card);
+    padding: 32px;
+    width: 360px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+}
+
+.card h1 {
+    margin: 0 0 6px;
+}
+
+.subtitle {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+/* ============================= */
+/* Form */
+/* ============================= */
+.field {
+    margin-bottom: 16px;
+}
+
+.field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.field input,
+.field select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.field input:focus,
+.field select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* ============================= */
+/* Buttons */
+/* ============================= */
+button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #1e293b;
+    color: var(--text);
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+button.primary {
+    background: var(--accent);
+    color: white;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* ============================= */
+/* Alternative Action */
+/* ============================= */
+.alt-action {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.alt-action a {
+    color: var(--accent);
+    text-decoration: none;
+    margin-left: 4px;
+}
+
+.alt-action a:hover {
+    text-decoration: underline;
+}
+
+/* ============================= */
+/* Lobby Layout */
+/* ============================= */
+.lobby {
+    display: flex;
+    height: 100vh;
+}
+
+/* ============================= */
+/* Chat Container */
+/* ============================= */
+.chat-container {
+    flex: 1;
+    max-width: 700px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    height: 80vh;
+}
+
+/* Chat Header */
+.chat-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+}
+
+/* Chat Messages Box */
+.chat-box {
+    flex: 1;
+    padding: 16px;
+    background: var(--panel);
+    overflow-y: auto;
+}
+
+/* Chat Input */
+.chat-input {
+    display: flex;
+    gap: 10px;
+    padding: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+}
+
+/* ============================= */
+/* Players Panel */
+/* ============================= */
+.players {
+    width: 220px;
+    padding: 20px;
+    background: var(--card);
+    border-left: 1px solid var(--border);
+}
+
+.players h3 {
+    margin-top: 0;
+}
+
+.players ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.players li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.page {
+  position: absolute;
+  inset: 0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.chat-message {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: #1e293b;
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
