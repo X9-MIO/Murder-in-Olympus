@@ -31,6 +31,13 @@ export default function JoinGame() {
     };
   }, [socket]);
 
+  const handleQuickTest = () => {
+  setRoomCode(roomCodeInput || "TEST12"); // Set the state so Game.js doesn't kick you out
+  setPlayerName(playerName || "Player");
+  navigate('/game');
+};
+
+
   const handleJoin = () => {
     if (!playerName.trim()) {
       setError('Please enter your name');
@@ -118,6 +125,10 @@ export default function JoinGame() {
                 {error}
               </div>
             )}
+
+            <Button onClick={handleQuickTest} className="w-full">
+              Join Game (Test Mode)
+            </Button>
 
             <Button
               onClick={handleJoin}
