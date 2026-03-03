@@ -28,10 +28,22 @@
             <span>or</span>
             <a href="#" id="createroomlink">create a room</a>
         </div>
+
+        <div class="error-message" id="join-error">
+            
+        </div>
+
+        <div class="error-message" id="display-name-error">
+            
+        </div>
     </div>
 </div>
 
 <div class="page lobby-page hidden" id="lobby">
+    <button class="lobby-back-btn" id="backToJoinBtn">
+        ← Back
+    </button>
+
     <div class="lobby">
         <div class="chat-container">
             <div class="chat-header">Chat</div>
@@ -89,9 +101,12 @@
             <span>or</span>
             <a href="#" id="joinroomlink">join an existing room</a>
         </div>
+
+        <div class="error-message hidden" id="create-error">
+            Error message
+        </div>
     </div>
 </div>
-
 
 <script type="module" src="/src/main.js"></script>
 

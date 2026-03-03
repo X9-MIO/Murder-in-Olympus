@@ -30,15 +30,55 @@ function showPage(pageId) {
   document.getElementById(pageId).classList.remove("hidden");
 }
 
-const button = document.getElementById("joinbtn");
+function displayError(errorElement, errorMessage) {
+  const display = document.getElementById(errorElement);
+  display.textContent = errorMessage;
+  display.classList.remove("hidden");
+}
 
-button.addEventListener('click', () => {
-  const roomCode = document.getElementById("roomcode").value;
-  const displayName = document.getElementById("displayname").value;
+function hideError(errorElement) {
+  const display = document.getElementById(errorElement);
+  display.classList.add("hidden");
+}
 
-  showPage("lobby");
+const joinButton = document.getElementById("joinbtn");
 
-  socket.emit('join-room', roomCode, displayName);
+joinButton.addEventListener('click', () => {
+  const roomCode = document.getElementById("roomcode").value.trim();
+  const displayName = document.getElementById("displayname").value.trim();
+
+  let error = false;
+
+  if(roomCode === "") {
+    error = true;
+    displayError("join-error", "room code field cannot be empty");
+  }
+  else {
+    hideError("join-error");
+  }
+
+  if(displayName === "") {
+    error = true;
+    displayError("display-name-error", "display name field cannot be empty");
+  }
+  else {
+    hideError("display-name-error");
+  }
+
+  if (error) {
+    return;
+  }
+
+  socket.emit('check-if-room-exists', roomCode)
+  socket.once('RoomCheck', (isThere) => {
+    if(isThere) {
+      showPage("lobby");
+      socket.emit('join-room', roomCode, displayName);
+    }
+    else {
+      displayError("join-error", "Room does not exist.");
+    }
+  });
 });
 
 const chatBox = document.querySelector(".chat-box");
@@ -100,37 +140,24 @@ joinRoomLink.addEventListener('click', (e) => {
 
 const createRoomButton = document.getElementById("createroombtn");
 
-function generateRoomCode(length = 6) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
+createRoomButton.addEventListener('click', () => {
+  const roomName = document.getElementById("roomname").value.trim();
+  const numberOfPlayers = Number(document.getElementById("playercount").value);
 
-  let code = "";
-  for (let i = 0; i < length; i++) {
-    code += chars[array[i] % chars.length];
+  let error = false;
+
+  if(roomName === "") {
+    error = true;
+    displayError("create-error", "Room name cannot be empty");
   }
 
-  return code;
-}
-
-function createUniqueRoom(existingRooms) {
-  let code;
-  do {
-    code = generateRoomCode(6);
-  } while (code in existingRooms);
-  return code;
-}
-
-createRoomButton.addEventListener('click', () => {
-  const roomName = document.getElementById("roomname");
-  const numberOfPlayers = document.getElementById("playercount").value;
-
-  socket.emit('getRooms');
-  socket.once('roomData', (rooms) => {
-    const code = createUniqueRoom(rooms)
-    socket.emit("created-room", roomName, numberOfPlayers, code);
-  });
+  if(error){
+    return;
+  }
+  
+  socket.emit('create-room', roomName, numberOfPlayers)
   
   showPage("lobby")
 });
+
 
