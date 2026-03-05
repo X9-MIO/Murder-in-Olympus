@@ -33,6 +33,166 @@ function createUniqueRoom(existingRooms) {
   return code;
 }
 
+function startVotingPhase(roomCode) {
+    rooms[roomCode].gamePhase = 'voting';
+    rooms[roomCode].votes = {};
+    
+    // Get list of non-eliminated players for voting
+    const votingPlayers = rooms[roomCode].players.filter(p => !rooms[roomCode].eliminatedPlayers.has(p));
+    
+    io.to(roomCode).emit('voting-phase-started', {
+        players: votingPlayers,
+        duration: 30 // seconds to vote
+    });
+    
+    // Auto-end voting after 30 seconds
+    rooms[roomCode].votingTimer = setTimeout(() => {
+        rooms[roomCode].votingTimer = null;
+        endVotingPhase(roomCode);
+    }, 30000);
+}
+
+function endVotingPhase(roomCode) {
+    const votes = rooms[roomCode].votes;
+    const voteCount = {};
+    
+    // Count votes
+    Object.values(votes).forEach(targetName => {
+        voteCount[targetName] = (voteCount[targetName] || 0) + 1;
+    });
+    
+    // Find player with most votes
+    const eliminated = Object.keys(voteCount).reduce((a, b) => 
+        voteCount[a] > voteCount[b] ? a : b
+    );
+    
+    // Remove eliminated player
+    rooms[roomCode].players = rooms[roomCode].players.filter(p => p !== eliminated);
+    rooms[roomCode].eliminatedPlayers.add(eliminated);
+    
+    io.to(roomCode).emit('player-eliminated', {
+        name: eliminated,
+        voteCount: voteCount[eliminated]
+    });
+    
+    // Start day phase after elimination
+    setTimeout(() => {
+        startDayPhase(roomCode);
+    }, 5000);
+}
+
+function startDayPhase(roomCode) {
+    rooms[roomCode].gamePhase = 'day';
+    rooms[roomCode].nightActions = {}; // Reset night actions
+    
+    io.to(roomCode).emit('day-phase-started', {
+        message: "The sun rises over Olympus... The gods watch as mortals struggle for survival."
+    });
+    
+    // Day phase lasts 10 seconds, then night begins
+    setTimeout(() => {
+        startNightPhase(roomCode);
+    }, 10000);
+}
+
+function startNightPhase(roomCode) {
+    rooms[roomCode].gamePhase = 'night';
+    rooms[roomCode].nightActions = {};
+    rooms[roomCode].actionQueue = [];
+    
+    // Get all connected players and their roles
+    const playerIds = Array.from(io.sockets.adapter.rooms.get(roomCode) || []);
+    const playersWithRoles = playerIds.map(playerId => ({
+        id: playerId,
+        name: socketToUser[playerId].displayName,
+        role: rooms[roomCode].playerRoles ? rooms[roomCode].playerRoles[playerId] : 'Villager'
+    }));
+    
+    // Find the werewolf
+    const werewolf = playersWithRoles.find(p => p.role === 'Wolf');
+    if (werewolf) {
+        rooms[roomCode].actionQueue.push({
+            type: 'werewolf-kill',
+            player: werewolf,
+            targets: playersWithRoles.filter(p => p.role !== 'Wolf' && !rooms[roomCode].eliminatedPlayers.has(p.name)).map(p => p.name)
+        });
+    }
+    
+    // Add other roles here later (Detective, Doctor, etc.)
+    
+    // Start processing night actions
+    processNextNightAction(roomCode);
+}
+
+function processNextNightAction(roomCode) {
+    if (rooms[roomCode].actionQueue.length === 0) {
+        // All night actions complete, reveal results
+        setTimeout(() => {
+            revealNightActions(roomCode);
+        }, 2000);
+        return;
+    }
+    
+    const action = rooms[roomCode].actionQueue.shift();
+    
+    if (action.type === 'werewolf-kill') {
+        // Tell werewolf to choose a victim
+        io.to(action.player.id).emit('night-action-required', {
+            type: 'werewolf-kill',
+            targets: action.targets,
+            message: 'Choose a player to eliminate tonight...'
+        });
+    }
+    
+    // Set timeout for this action (30 seconds)
+    rooms[roomCode].actionTimeout = setTimeout(() => {
+        // Action timed out, skip to next
+        processNextNightAction(roomCode);
+    }, 30000);
+}
+
+function revealNightActions(roomCode) {
+    rooms[roomCode].gamePhase = 'action-reveal';
+    
+    // Get all night actions
+    const actions = Object.values(rooms[roomCode].nightActions);
+    
+    // Process werewolf kill
+    const werewolfKill = actions.find(action => action.type === 'werewolf-kill');
+    if (werewolfKill) {
+        // Remove the killed player
+        rooms[roomCode].players = rooms[roomCode].players.filter(p => p !== werewolfKill.target);
+        rooms[roomCode].eliminatedPlayers.add(werewolfKill.target);
+    }
+    
+    io.to(roomCode).emit('night-actions-revealed', {
+        actions: actions,
+        eliminatedPlayer: werewolfKill ? werewolfKill.target : null,
+        message: "The night has passed... Here is what transpired:"
+    });
+    
+    // After reveal, start new discussion phase
+    setTimeout(() => {
+        startNewDiscussionPhase(roomCode);
+    }, 10000);
+}
+
+function startNewDiscussionPhase(roomCode) {
+    rooms[roomCode].gamePhase = 'discussion';
+    rooms[roomCode].skippedPlayers = new Set();
+    
+    setTimeout(() => {
+        io.to(roomCode).emit('discussion-phase-started', {
+            players: rooms[roomCode].players,
+            duration: 60
+        });
+        
+        rooms[roomCode].discussionTimer = setTimeout(() => {
+            startVotingPhase(roomCode);
+        }, 60000);
+    }, 2000);
+}
+
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
@@ -90,9 +250,12 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on('send-message', (roomCode,message) => {
-
-    socket.to(roomCode).emit("receive-message", message);
+  socket.on('send-message', (roomCode, message) => {
+    const user = socketToUser[socket.id];
+    // Check if player is eliminated
+    if (user && rooms[roomCode] && !rooms[roomCode].eliminatedPlayers.has(user.displayName)) {
+      socket.to(roomCode).emit("receive-message", message);
+    }
   });
 
  socket.on('create-room', (roomName, numberOfPlayer,creatorname) => {
@@ -142,13 +305,16 @@ io.on("connection", (socket) => {
           // 2. Shuffle the players randomly
           const shuffledPlayers = playerIds.sort(() => Math.random() - 0.5);
           
-          // 3. Hand out the roles privately
+          // Store player roles for night actions
+          rooms[roomCode].playerRoles = {};
           shuffledPlayers.forEach((playerId, index) => {
               let assignedRole = "Villager"; // Default role
               
               if (index === 0) {
                   assignedRole = "Wolf"; // The first random person gets to be the killer
               }
+              
+              rooms[roomCode].playerRoles[playerId] = assignedRole;
               // You can add more roles here later! (e.g., if index === 1, role = "Detective")
 
               // 4. Send this role PRIVATELY to this specific player only!
@@ -157,8 +323,76 @@ io.on("connection", (socket) => {
           
           // 5. Finally, tell the whole room to play the intro animation
           io.to(roomCode).emit('game-starting');
+
+          rooms[roomCode].votes = {}; // Track votes: {playerId: targetPlayerName}
+          rooms[roomCode].gamePhase = 'day';
+          rooms[roomCode].discussionTimer = null;
+          rooms[roomCode].votingTimer = null;
+          rooms[roomCode].skippedPlayers = new Set(); // Track who has skipped
+          rooms[roomCode].eliminatedPlayers = new Set(); // Track eliminated players by name
+
+          // After the reveal animation we immediately begin the day/night cycle
+          setTimeout(() => {
+              startDayPhase(roomCode);
+          }, 5000);
       }
   });
 
+  socket.on('cast-vote', (roomCode, targetPlayerName) => {
+    if (rooms[roomCode] && rooms[roomCode].gamePhase === 'voting') {
+        rooms[roomCode].votes[socket.id] = targetPlayerName;
+        // if every player in room has voted, end voting early
+        const playerIds = Array.from(io.sockets.adapter.rooms.get(roomCode) || []);
+        if (Object.keys(rooms[roomCode].votes).length >= playerIds.length) {
+            // clear timer if running
+            if (rooms[roomCode].votingTimer) {
+                clearTimeout(rooms[roomCode].votingTimer);
+                rooms[roomCode].votingTimer = null;
+            }
+            endVotingPhase(roomCode);
+        }
+    }
+  });
+
+  socket.on('skip-discussion', (roomCode) => {
+    if (rooms[roomCode] && rooms[roomCode].gamePhase === 'discussion') {
+        rooms[roomCode].skippedPlayers.add(socket.id);
+        
+        // Check if all players have skipped
+        const playerIds = Array.from(io.sockets.adapter.rooms.get(roomCode) || []);
+        if (rooms[roomCode].skippedPlayers.size === playerIds.length) {
+            // All players have skipped, end discussion early
+            if (rooms[roomCode].discussionTimer) {
+                clearTimeout(rooms[roomCode].discussionTimer);
+            }
+            io.to(roomCode).emit('discussion-skipped');
+            startVotingPhase(roomCode); // Start voting immediately
+        } else {
+            // Notify others that someone skipped
+            const remaining = playerIds.length - rooms[roomCode].skippedPlayers.size;
+            io.to(roomCode).emit('player-skipped', { remaining: remaining });
+        }
+    }
+  });
+
+  socket.on('submit-night-action', (roomCode, actionData) => {
+    if (rooms[roomCode] && rooms[roomCode].gamePhase === 'night') {
+        // Store the action
+        rooms[roomCode].nightActions[socket.id] = {
+            player: socketToUser[socket.id].displayName,
+            role: rooms[roomCode].playerRoles[socket.id],
+            ...actionData
+        };
+        
+        // Clear the action timeout
+        if (rooms[roomCode].actionTimeout) {
+            clearTimeout(rooms[roomCode].actionTimeout);
+            rooms[roomCode].actionTimeout = null;
+        }
+        
+        // Process next action
+        processNextNightAction(roomCode);
+    }
+  });
 });
 
