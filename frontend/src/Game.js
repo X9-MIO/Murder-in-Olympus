@@ -180,6 +180,12 @@ export function setupGameLogic(socket, gameState) {
     }
     
     function showVotingUI(players) {
+        // Don't show voting UI if player is eliminated
+        if (gameState.isEliminated) {
+            appendToGameChat("[NARRATOR]: You are eliminated and cannot vote.");
+            return;
+        }
+        
         // Hide discussion chat
         gameChatBox.style.display = 'none';
         
@@ -248,8 +254,42 @@ export function setupGameLogic(socket, gameState) {
         
         // Check if current player was eliminated
         if (data.name === gameState.currentDisplayName) {
+            // Mark player as eliminated in game state
+            gameState.isEliminated = true;
+            
+            // Disable chat input
             gameChatInput.disabled = true;
             gameSendBtn.disabled = true;
+            
+            // Hide chat input container
+            const chatInput = document.getElementById('game-chat');
+            if (chatInput) chatInput.style.display = 'none';
+            
+            // Hide skip button
+            const skipBtn = document.getElementById('skipDiscussionBtn');
+            if (skipBtn) skipBtn.classList.add('hidden');
+            
+            // Hide vote button
+            const voteBtn = document.getElementById('votebtn');
+            if (voteBtn) voteBtn.classList.add('hidden');
+            
+            // Disable all dynamically created vote buttons
+            const voteButtons = document.querySelectorAll('#votingContainer button');
+            voteButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.onclick = null;
+            });
+            
+            // Hide voting UI if it's displayed
+            const votingContainer = document.getElementById('votingContainer');
+            if (votingContainer) votingContainer.style.display = 'none';
+            
+            // Hide vote timer if it's displayed
+            const voteTimer = document.getElementById('voteTimer');
+            if (voteTimer) voteTimer.style.display = 'none';
+            
             appendToGameChat(`[SYSTEM]: You have been eliminated. You can no longer participate.`);
         }
         
@@ -416,8 +456,42 @@ export function setupGameLogic(socket, gameState) {
         
         // Check if current player was killed at night
         if (data.eliminatedPlayer === gameState.currentDisplayName) {
+            // Mark player as eliminated in game state
+            gameState.isEliminated = true;
+            
+            // Disable chat input
             gameChatInput.disabled = true;
             gameSendBtn.disabled = true;
+            
+            // Hide chat input container
+            const chatInput = document.getElementById('game-chat');
+            if (chatInput) chatInput.style.display = 'none';
+            
+            // Hide skip button
+            const skipBtn = document.getElementById('skipDiscussionBtn');
+            if (skipBtn) skipBtn.classList.add('hidden');
+            
+            // Hide vote button
+            const voteBtn = document.getElementById('votebtn');
+            if (voteBtn) voteBtn.classList.add('hidden');
+            
+            // Disable all dynamically created vote buttons
+            const voteButtons = document.querySelectorAll('#votingContainer button');
+            voteButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.onclick = null;
+            });
+            
+            // Hide voting UI if it's displayed
+            const votingContainer = document.getElementById('votingContainer');
+            if (votingContainer) votingContainer.style.display = 'none';
+            
+            // Hide vote timer if it's displayed
+            const voteTimer = document.getElementById('voteTimer');
+            if (voteTimer) voteTimer.style.display = 'none';
+            
             appendToGameChat(`[NARRATOR]: You have been eliminated. You can no longer participate.`);
         }
         

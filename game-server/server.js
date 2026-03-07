@@ -356,12 +356,25 @@ io.on("connection", (socket) => {
 
   socket.on('skip-discussion', (roomCode) => {
     if (rooms[roomCode] && rooms[roomCode].gamePhase === 'discussion') {
+        const user = socketToUser[socket.id];
+        
+        // Don't allow eliminated players to skip
+        if (user && rooms[roomCode].eliminatedPlayers && rooms[roomCode].eliminatedPlayers.has(user.displayName)) {
+            return;
+        }
+        
         rooms[roomCode].skippedPlayers.add(socket.id);
         
-        // Check if all players have skipped
+        // Get list of non-eliminated active players
         const playerIds = Array.from(io.sockets.adapter.rooms.get(roomCode) || []);
-        if (rooms[roomCode].skippedPlayers.size === playerIds.length) {
-            // All players have skipped, end discussion early
+        const activePlayerIds = playerIds.filter(id => {
+            const player = socketToUser[id];
+            return player && (!rooms[roomCode].eliminatedPlayers || !rooms[roomCode].eliminatedPlayers.has(player.displayName));
+        });
+        
+        // Check if all active (non-eliminated) players have skipped
+        if (rooms[roomCode].skippedPlayers.size === activePlayerIds.length) {
+            // All active players have skipped, end discussion early
             if (rooms[roomCode].discussionTimer) {
                 clearTimeout(rooms[roomCode].discussionTimer);
             }
@@ -369,7 +382,7 @@ io.on("connection", (socket) => {
             startVotingPhase(roomCode); // Start voting immediately
         } else {
             // Notify others that someone skipped
-            const remaining = playerIds.length - rooms[roomCode].skippedPlayers.size;
+            const remaining = activePlayerIds.length - rooms[roomCode].skippedPlayers.size;
             io.to(roomCode).emit('player-skipped', { remaining: remaining });
         }
     }

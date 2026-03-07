@@ -12,7 +12,8 @@ export const socket = io("http://localhost:3000");
 // Group state into an object so it can easily be shared and updated across files
 export const gameState = {
     currentRoom: "",
-    currentDisplayName: ""
+    currentDisplayName: "",
+    isEliminated: false
 };
 
 console.log("Script loaded");
