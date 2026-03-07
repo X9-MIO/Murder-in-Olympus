@@ -253,7 +253,7 @@ io.on("connection", (socket) => {
   socket.on('send-message', (roomCode, message) => {
     const user = socketToUser[socket.id];
     // Check if player is eliminated
-    if (user && rooms[roomCode] && !rooms[roomCode].eliminatedPlayers.has(user.displayName)) {
+    if (user && rooms[roomCode] && (!rooms[roomCode].eliminatedPlayers || !rooms[roomCode].eliminatedPlayers.has(user.displayName))) {
       socket.to(roomCode).emit("receive-message", message);
     }
   });

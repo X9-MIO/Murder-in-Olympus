@@ -175,11 +175,14 @@
 <div class="page game-messaging-page hidden" id="gamemessagingpage">
     <h1 class="game-title discussion-title">Discussion Phase</h1>
     
+    <div id="discussionTimer" style="text-align: center; font-size: 1.5rem; color: var(--accent); margin: 10px 0;"></div>
+    
     <div class="discussion-layout">
         
         <div class="discussion-side-panel">
             <h3 class="role-label">Your Role</h3>
             <img id="messaging-role-image" src="" alt="Role" class="mini-card-image">
+            <button id="skipDiscussionBtn" class="hidden" style="width: 100%; padding: 12px; background: #f59e0b; color: white; border: none; border-radius: 5px; font-size: 0.9rem; cursor: pointer; font-weight: bold; margin-top: 15px;">Skip Discussion</button>
         </div>
 
         <div class="chat-container discussion-chat-override">

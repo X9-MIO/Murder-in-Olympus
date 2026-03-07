@@ -198,3 +198,17 @@
     transition: transform 0.1s; 
 }
 .vote-btn:active { transform: scale(0.95); box-shadow: 0 2px 3px rgba(0,0,0,0.5); }
+
+/* Skip Discussion Button */
+#skipDiscussionBtn {
+    transition: background 0.2s ease;
+}
+
+#skipDiscussionBtn:hover:not(:disabled) {
+    background: #d97706 !important;
+}
+
+#skipDiscussionBtn:disabled {
+    background: #6b7280 !important;
+    cursor: not-allowed;
+}

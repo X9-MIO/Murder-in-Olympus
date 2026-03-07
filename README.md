@@ -58,5 +58,46 @@ If you change anything in the server.js file, you must restart the server to see
 4. werewolf vote to kill logic
 5. other character logic  
 6. ..
-7. ..
+
+---
+
+# Game Logic Overview
+
+## Variables
+
+```javascript
+let discussionCountdownInterval = null;
+let discussionEndTimeout = null;
+```
+
+## Socket Events
+
+```javascript
+socket.on('discussion-phase-started', data => {
+    // …create timer element…
+    if (discussionCountdownInterval) clearInterval(discussionCountdownInterval);
+    if (discussionEndTimeout) clearTimeout(discussionEndTimeout);
+
+    discussionCountdownInterval = setInterval(…);
+    discussionEndTimeout = setTimeout(…, data.duration * 1000);
+
+    showSkipButton();
+});
+
+socket.on('discussion-skipped', () => {
+    appendToGameChat("[SYSTEM]: All players skipped! Moving to voting phase…");
+    hideSkipButton();
+    const timerElement = document.getElementById('discussionTimer');
+    if (timerElement) timerElement.style.display = 'none';
+
+    if (discussionCountdownInterval) {
+        clearInterval(discussionCountdownInterval);
+        discussionCountdownInterval = null;
+    }
+    if (discussionEndTimeout) {
+        clearTimeout(discussionEndTimeout);
+        discussionEndTimeout = null;
+    }
+});
+```
 
