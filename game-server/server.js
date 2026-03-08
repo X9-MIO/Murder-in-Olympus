@@ -5,11 +5,18 @@ const io = require("socket.io")(3000, {
   },
 });
 
-const rooms = {};
+/* ========================================================================== */
+/* STATE & DATA                                 */
+/* ========================================================================== */
 
+const rooms = {};
 const socketToUser = {};
 
 console.log("Socket.IO server running on port 3000");
+
+/* ========================================================================== */
+/* UTILITY FUNCTIONS                             */
+/* ========================================================================== */
 
 function generateRoomCode(length = 6) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -26,60 +33,15 @@ function generateRoomCode(length = 6) {
 
 function createUniqueRoom(existingRooms) {
   var code;
-
   do {
     code = generateRoomCode(6);
   } while (code in existingRooms);
   return code;
 }
 
-function startVotingPhase(roomCode) {
-    rooms[roomCode].gamePhase = 'voting';
-    rooms[roomCode].votes = {};
-    
-    // Get list of non-eliminated players for voting
-    const votingPlayers = rooms[roomCode].players.filter(p => !rooms[roomCode].eliminatedPlayers.has(p));
-    
-    io.to(roomCode).emit('voting-phase-started', {
-        players: votingPlayers,
-        duration: 30 // seconds to vote
-    });
-    
-    // Auto-end voting after 30 seconds
-    rooms[roomCode].votingTimer = setTimeout(() => {
-        rooms[roomCode].votingTimer = null;
-        endVotingPhase(roomCode);
-    }, 30000);
-}
-
-function endVotingPhase(roomCode) {
-    const votes = rooms[roomCode].votes;
-    const voteCount = {};
-    
-    // Count votes
-    Object.values(votes).forEach(targetName => {
-        voteCount[targetName] = (voteCount[targetName] || 0) + 1;
-    });
-    
-    // Find player with most votes
-    const eliminated = Object.keys(voteCount).reduce((a, b) => 
-        voteCount[a] > voteCount[b] ? a : b
-    );
-    
-    // Remove eliminated player
-    rooms[roomCode].players = rooms[roomCode].players.filter(p => p !== eliminated);
-    rooms[roomCode].eliminatedPlayers.add(eliminated);
-    
-    io.to(roomCode).emit('player-eliminated', {
-        name: eliminated,
-        voteCount: voteCount[eliminated]
-    });
-    
-    // Start day phase after elimination
-    setTimeout(() => {
-        startDayPhase(roomCode);
-    }, 5000);
-}
+/* ========================================================================== */
+/* GAME LOOP LOGIC                                */
+/* ========================================================================== */
 
 function startDayPhase(roomCode) {
     rooms[roomCode].gamePhase = 'day';
@@ -193,9 +155,62 @@ function startNewDiscussionPhase(roomCode) {
     }, 2000);
 }
 
+function startVotingPhase(roomCode) {
+    rooms[roomCode].gamePhase = 'voting';
+    rooms[roomCode].votes = {};
+    
+    // Get list of non-eliminated players for voting
+    const votingPlayers = rooms[roomCode].players.filter(p => !rooms[roomCode].eliminatedPlayers.has(p));
+    
+    io.to(roomCode).emit('voting-phase-started', {
+        players: votingPlayers,
+        duration: 30 // seconds to vote
+    });
+    
+    // Auto-end voting after 30 seconds
+    rooms[roomCode].votingTimer = setTimeout(() => {
+        rooms[roomCode].votingTimer = null;
+        endVotingPhase(roomCode);
+    }, 30000);
+}
+
+function endVotingPhase(roomCode) {
+    const votes = rooms[roomCode].votes;
+    const voteCount = {};
+    
+    // Count votes
+    Object.values(votes).forEach(targetName => {
+        voteCount[targetName] = (voteCount[targetName] || 0) + 1;
+    });
+    
+    // Find player with most votes
+    const eliminated = Object.keys(voteCount).reduce((a, b) => 
+        voteCount[a] > voteCount[b] ? a : b
+    );
+    
+    // Remove eliminated player
+    rooms[roomCode].players = rooms[roomCode].players.filter(p => p !== eliminated);
+    rooms[roomCode].eliminatedPlayers.add(eliminated);
+    
+    io.to(roomCode).emit('player-eliminated', {
+        name: eliminated,
+        voteCount: voteCount[eliminated]
+    });
+    
+    // Start day phase after elimination
+    setTimeout(() => {
+        startDayPhase(roomCode);
+    }, 5000);
+}
+
+/* ========================================================================== */
+/* SOCKET EVENTS                                   */
+/* ========================================================================== */
+
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
+  /* ---------------------- Disconnect Handling ---------------------- */
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
     const user = socketToUser[socket.id];
@@ -231,14 +246,39 @@ io.on("connection", (socket) => {
     }
   });
 
+  /* ---------------------- Room Management ---------------------- */
+  socket.on('create-room', (roomName, numberOfPlayer,creatorname) => {
+    // 1. Generate the code
+    const code = createUniqueRoom(rooms);
+    
+    // 2. Save the room data
+    rooms[code] = {
+      roomName,
+      numberOfPlayers: numberOfPlayer,
+      players: [creatorname],
+      creatorId: socket.id
+    };
+    
+    // 3. ACTUALLY join the room!
+    socket.join(code);
+    console.log("Creator joined room: " + code);
+
+    socketToUser[socket.id] = { roomCode: code, displayName: creatorname };
+    
+    // 4. Send the new code back to the creator so they know what it is
+    socket.emit('room-created', code); 
+    io.to(code).emit('update-players', rooms[code].players);
+  });
+
   socket.on('join-room', (roomCode, displayName) => {
     if(rooms[roomCode].players.length >= rooms[roomCode].numberOfPlayers) {
       socket.emit('room-full', roomCode);
       return;
     }
+    
     socket.join(roomCode);
     console.log(displayName + " joined room: " + roomCode)
-    console.log(socket.rooms);
+    
     if (rooms[roomCode]) {
       rooms[roomCode].players.push(displayName);
 
@@ -248,34 +288,6 @@ io.on("connection", (socket) => {
       // Tell everyone in the room (including the joiner) to update their list
       io.to(roomCode).emit('update-players', rooms[roomCode].players);
     }
-  });
-
-  socket.on('send-message', (roomCode, message) => {
-    const user = socketToUser[socket.id];
-    // Check if player is eliminated
-    if (user && rooms[roomCode] && (!rooms[roomCode].eliminatedPlayers || !rooms[roomCode].eliminatedPlayers.has(user.displayName))) {
-      socket.to(roomCode).emit("receive-message", message);
-    }
-  });
-
- socket.on('create-room', (roomName, numberOfPlayer,creatorname) => {
-  // 1. Generate the code (added 'const' to be safe)
-  const code = createUniqueRoom(rooms);
-  // 2. Save the room data
-  rooms[code] = {
-    roomName,
-    numberOfPlayers: numberOfPlayer,
-    players: [creatorname],
-    creatorId: socket.id
-  };
-  // 3. ACTUALLY join the room!
-  socket.join(code);
-  console.log("Creator joined room: " + code);
-
-  socketToUser[socket.id] = { roomCode: code, displayName: creatorname };
-  // 4. Send the new code back to the creator so they know what it is
-  socket.emit('room-created', code); 
-  io.to(code).emit('update-players', rooms[code].players);
   });
 
   socket.on('check-if-room-exists', (roomCode) => {
@@ -294,6 +306,16 @@ io.on("connection", (socket) => {
     }
   });
 
+  /* ---------------------- Chat & Communication ---------------------- */
+  socket.on('send-message', (roomCode, message) => {
+    const user = socketToUser[socket.id];
+    // Check if player is eliminated
+    if (user && rooms[roomCode] && (!rooms[roomCode].eliminatedPlayers || !rooms[roomCode].eliminatedPlayers.has(user.displayName))) {
+      socket.to(roomCode).emit("receive-message", message);
+    }
+  });
+
+  /* ---------------------- Game Actions ---------------------- */
   // Host wants to start the game
   socket.on('start-game', (roomCode) => {
       if (rooms[roomCode] && rooms[roomCode].creatorId === socket.id) {
@@ -408,4 +430,3 @@ io.on("connection", (socket) => {
     }
   });
 });
-

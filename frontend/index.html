@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <title>Murder in Olympus</title>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/styles.css">
-    <link rel="stylesheet" href="/src/GameStyle.css">
+    <link rel="stylesheet" href="./src/main.css">
+    <link rel="stylesheet" href="./src/GameMessaging.css">
+    <link rel="stylesheet" href="./src/Lobby.css">
+    <link rel="stylesheet" href="./src/Game.css">
+    <link rel="stylesheet" href="./src/JoinLobby.css">
+    <link rel="stylesheet" href="./src/CreateRoom.css">
 </head>
 <body>
-
-<!-- join  Lobby page -->
 
 <div class="page join-page" id="joinpage">
     <div class="card">
@@ -33,26 +35,15 @@
             <a href="#" id="createroomlink">create a room</a>
         </div>
 
-        <div class="error-message" id="join-error">
-            
-        </div>
-
-        <div class="error-message" id="display-name-error">
-            
-        </div>
+        <div class="error-message" id="join-error"></div>
+        <div class="error-message" id="display-name-error"></div>
     </div>
 </div>
-<!-- join  Lobby page -->
-
-<!-- lobby page -->
 
 <div class="page lobby-page hidden" id="lobby">
+    <button class="lobby-back-btn" id="backToJoinBtn">← Back</button>
 
-    <button class="lobby-back-btn" id="backToJoinBtn">
-        ← Back
-    </button>
-
-    <h2 style="text-align: center;">Room Code: <span id="room-code-display">...</span></h2>
+    <h2>Room Code: <span id="room-code-display">...</span></h2>
 
     <div class="lobby">
         <div class="chat-container">
@@ -66,20 +57,12 @@
 
         <aside class="players">
             <h3>Players</h3>
-            <ul id ="players-list">
-    
-            </ul>
+            <ul id ="players-list"></ul>
         </aside>
     </div>
 
-     <button class="primary hidden" id="startgamebtn">Start Game</button>
+    <button class="primary hidden" id="startgamebtn">Start Game</button>
 </div>
-
-<!-- lobby page -->
-
-
-
-<!-- create room page -->
 
 <div class="page create-room-page hidden" id="createroompage">
     <div class="card">
@@ -123,66 +106,53 @@
             <a href="#" id="joinroomlink">join an existing room</a>
         </div>
 
-        <div class="error-message hidden" id="create-error">
-            Error message
-        </div>
+        <div class="error-message hidden" id="create-error">Error message</div>
     </div>
 </div>
-<!-- create room page -->
 
-
-
-
-
-<!-- game page -->
 <div class="page game-page hidden" id="gamepage">
-    
     <div class="intro-screen">
         <div class="intro-main typewriter">Murder in Olympus</div>
         <div class="intro-sub fade-in">game is starting...</div>
     </div>
     
     <div class="actual-game hidden" id="actualGameContent">
-        <h1 style="text-align: center; margin-top: 50px; font-family: 'VT323', monospace;">Game Board</h1>
+        <h1 class="game-board-title">Game Board</h1>
         
-        <div id="role-text-container" class="hidden" style="text-align: center; margin-bottom: 20px;">
-            <h2 style="margin: 0; color: var(--muted); font-size: 1.2rem;">You are the</h2>
-            <h3 id="card-role-text" style="font-size: 2.5rem; margin: 10px 0;"></h3>
+        <div id="role-text-container" class="hidden">
+            <h2>You are the</h2>
+            <h3 id="card-role-text"></h3>
         </div>
         
-       <div class="card-scene" style="width: 400px; height: 700px; margin: 0 auto;">
+       <div class="card-scene large-scene">
             <div class="card-inner" id="roleCard">
                 
-                <div class="card-face card-face-front" style="background: transparent !important; border: none !important; box-shadow: none !important; padding: 0; margin: 0;">
-                    <img src="/public/back_card.png" alt="Card Back" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                <div class="card-face card-face-front transparent-face">
+                    <img src="/public/back_card.png" alt="Card Back" class="cover-image">
                 </div>
 
-                <div class="card-face card-face-back" style="background: transparent !important; border: none !important; box-shadow: none !important; padding: 0; margin: 0;">
-                    <img id="role-image" src="" alt="Role" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                <div class="card-face card-face-back transparent-face">
+                    <img id="role-image" src="" alt="Role" class="cover-image">
                 </div>
                 
             </div>
         </div>
 
-        <p id="reveal-status-text" style="text-align: center; color: var(--muted); margin-top: 20px;">Revealing role in 5 seconds...</p>
+        <p id="reveal-status-text">Revealing role in 5 seconds...</p>
     </div>
 </div>
-<!-- game page -->
 
-
-
-<!-- game messaging page  -->  
 <div class="page game-messaging-page hidden" id="gamemessagingpage">
     <h1 class="game-title discussion-title">Discussion Phase</h1>
     
-    <div id="discussionTimer" style="text-align: center; font-size: 1.5rem; color: var(--accent); margin: 10px 0;"></div>
+    <div id="discussionTimer"></div>
     
     <div class="discussion-layout">
         
         <div class="discussion-side-panel">
             <h3 class="role-label">Your Role</h3>
             <img id="messaging-role-image" src="" alt="Role" class="mini-card-image">
-            <button id="skipDiscussionBtn" class="hidden" style="width: 100%; padding: 12px; background: #f59e0b; color: white; border: none; border-radius: 5px; font-size: 0.9rem; cursor: pointer; font-weight: bold; margin-top: 15px;">Skip Discussion</button>
+            <button id="skipDiscussionBtn" class="hidden">Skip Discussion</button>
         </div>
 
         <div class="chat-container discussion-chat-override">
@@ -194,19 +164,13 @@
             </div>
         </div>
         
-
         <div class="discussion-side-panel">
             <button id="votebtn" class="vote-btn">VOTE</button>
         </div>
 
     </div>
 </div>
-<!-- game messaging page  -->
-
-
-
 
 <script type="module" src="/src/main.js"></script>
-
 </body>
 </html>

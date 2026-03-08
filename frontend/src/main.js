@@ -1,6 +1,6 @@
 // main.js
 import { io } from "socket.io-client";
-import './styles.css';
+
 
 // Import our feature modules
 import { setupRoomLogic } from './Room.js';

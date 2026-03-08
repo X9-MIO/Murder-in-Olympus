@@ -1,0 +1,57 @@
+/* ============================= */
+/* Reset & Theme (main.css) */
+/* ============================= */
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #0f172a;
+    --panel: #020617;
+    --card: #020617;
+    --border: #1e293b;
+    --text: #e5e7eb;
+    --muted: #94a3b8;
+    --accent: #3b82f6;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden; 
+}
+
+.page {
+    position: absolute;
+    inset: 0;
+    height: 100vh;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Base Buttons */
+button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #1e293b;
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+button.primary {
+    background: var(--accent);
+    color: white;
+}
+
+button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}

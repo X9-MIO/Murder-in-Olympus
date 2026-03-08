@@ -2,10 +2,18 @@
 import { showPage } from './ui.js';
 
 export function setupGameLogic(socket, gameState) {
-  
+    
+    /* ========================================================================== */
+    /* 1. INITIALIZATION & SETUP                                                  */
+    /* ========================================================================== */
+    
     // timer handles for discussion phase
     let discussionCountdownInterval = null;
     let discussionEndTimeout = null;
+
+    /* ========================================================================== */
+    /* 2. GAME START & ROLE REVEAL                                                */
+    /* ========================================================================== */
 
     // Host clicks "Start Game"
     document.getElementById("startgamebtn").addEventListener('click', () => {
@@ -74,9 +82,10 @@ export function setupGameLogic(socket, gameState) {
         }, 6000); 
     });
 
-    // ==========================================
-    // DISCUSSION PHASE CHAT LOGIC
-    // ==========================================
+    /* ========================================================================== */
+    /* 3. IN-GAME CHAT LOGIC                                                      */
+    /* ========================================================================== */
+    
     const gameChatInput = document.getElementById('gameChatInput'); 
     const gameSendBtn = document.getElementById('gameSendBtn');
     const gameChatBox = document.getElementById('gameChatBox');
@@ -114,6 +123,10 @@ export function setupGameLogic(socket, gameState) {
     socket.on('receive-message', (message) => {
         appendToGameChat(message);
     });
+
+    /* ========================================================================== */
+    /* 4. DISCUSSION PHASE LOGIC                                                  */
+    /* ========================================================================== */
 
     socket.on('discussion-phase-started', data => {
         // Show timer for discussion phase
@@ -178,7 +191,58 @@ export function setupGameLogic(socket, gameState) {
         const skipBtn = document.getElementById('skipDiscussionBtn');
         if (skipBtn) skipBtn.classList.add('hidden');
     }
+
+    socket.on('player-skipped', (data) => {
+        appendToGameChat(`[NARRATOR]: A player skipped discussion. ${data.remaining} players remaining to skip.`);
+    });
     
+    socket.on('discussion-skipped', () => {
+        appendToGameChat("[NARRATOR]: All players skipped! Moving to voting phase...");
+        hideSkipButton();
+        const timerElement = document.getElementById('discussionTimer');
+        if (timerElement) timerElement.style.display = 'none';
+
+        if (discussionCountdownInterval) {
+            clearInterval(discussionCountdownInterval);
+            discussionCountdownInterval = null;
+        }
+        if (discussionEndTimeout) {
+            clearTimeout(discussionEndTimeout);
+            discussionEndTimeout = null;
+        }
+    });
+
+    /* ========================================================================== */
+    /* 5. VOTING PHASE LOGIC                                                      */
+    /* ========================================================================== */
+    
+    socket.on('voting-phase-started', (data) => {
+        gameChatInput.disabled = true;
+        gameSendBtn.disabled = true;
+        hideSkipButton(); // Hide skip button when voting starts
+        showVotingUI(data.players);
+        
+        // Show timer for voting period (30 seconds)
+        let voteTimeLeft = 30;
+        const voteTimerElement = document.getElementById('voteTimer') || createVoteTimer();
+        
+        const voteCountdownInterval = setInterval(() => {
+            voteTimeLeft--;
+            voteTimerElement.textContent = `Voting: ${voteTimeLeft}s`;
+            
+            if (voteTimeLeft <= 0) {
+                clearInterval(voteCountdownInterval);
+                appendToGameChat("[NARRATOR]: Voting phase ended. Counting votes...");
+                // Hide voting UI and timer
+                const votingContainer = document.getElementById('votingContainer');
+                if (votingContainer) votingContainer.remove();
+                const voteTimerElement = document.getElementById('voteTimer');
+                if (voteTimerElement) voteTimerElement.remove();
+                gameChatBox.style.display = 'block';
+            }
+        }, 1000);
+    });
+
     function showVotingUI(players) {
         // Don't show voting UI if player is eliminated
         if (gameState.isEliminated) {
@@ -247,6 +311,21 @@ export function setupGameLogic(socket, gameState) {
         votingContainer.appendChild(buttonsContainer);
         gameChatBox.parentElement.insertBefore(votingContainer, gameChatBox);
     }
+
+    function createVoteTimer() {
+        const timerDiv = document.createElement('div');
+        timerDiv.id = 'voteTimer';
+        timerDiv.style.cssText = 'text-align: center; font-size: 1.5rem; color: #ef4444; margin: 10px 0;';
+        const gamePage = document.getElementById('gamemessagingpage');
+        if (gamePage) {
+            gamePage.insertBefore(timerDiv, gamePage.firstChild);
+        }
+        return timerDiv;
+    }
+
+    /* ========================================================================== */
+    /* 6. ELIMINATION LOGIC                                                       */
+    /* ========================================================================== */
 
     socket.on('player-eliminated', (data) => {
         // Show elimination message
@@ -378,63 +457,9 @@ export function setupGameLogic(socket, gameState) {
         }
     }
 
-    socket.on('voting-phase-started', (data) => {
-        gameChatInput.disabled = true;
-        gameSendBtn.disabled = true;
-        hideSkipButton(); // Hide skip button when voting starts
-        showVotingUI(data.players);
-        
-        // Show timer for voting period (30 seconds)
-        let voteTimeLeft = 30;
-        const voteTimerElement = document.getElementById('voteTimer') || createVoteTimer();
-        
-        const voteCountdownInterval = setInterval(() => {
-            voteTimeLeft--;
-            voteTimerElement.textContent = `Voting: ${voteTimeLeft}s`;
-            
-            if (voteTimeLeft <= 0) {
-                clearInterval(voteCountdownInterval);
-                appendToGameChat("[NARRATOR]: Voting phase ended. Counting votes...");
-                // Hide voting UI and timer
-                const votingContainer = document.getElementById('votingContainer');
-                if (votingContainer) votingContainer.remove();
-                const voteTimerElement = document.getElementById('voteTimer');
-                if (voteTimerElement) voteTimerElement.remove();
-                gameChatBox.style.display = 'block';
-            }
-        }, 1000);
-    });
-    
-    function createVoteTimer() {
-        const timerDiv = document.createElement('div');
-        timerDiv.id = 'voteTimer';
-        timerDiv.style.cssText = 'text-align: center; font-size: 1.5rem; color: #ef4444; margin: 10px 0;';
-        const gamePage = document.getElementById('gamemessagingpage');
-        if (gamePage) {
-            gamePage.insertBefore(timerDiv, gamePage.firstChild);
-        }
-        return timerDiv;
-    }
-    
-    socket.on('player-skipped', (data) => {
-        appendToGameChat(`[NARRATOR]: A player skipped discussion. ${data.remaining} players remaining to skip.`);
-    });
-    
-    socket.on('discussion-skipped', () => {
-        appendToGameChat("[NARRATOR]: All players skipped! Moving to voting phase...");
-        hideSkipButton();
-        const timerElement = document.getElementById('discussionTimer');
-        if (timerElement) timerElement.style.display = 'none';
-
-        if (discussionCountdownInterval) {
-            clearInterval(discussionCountdownInterval);
-            discussionCountdownInterval = null;
-        }
-        if (discussionEndTimeout) {
-            clearTimeout(discussionEndTimeout);
-            discussionEndTimeout = null;
-        }
-    });
+    /* ========================================================================== */
+    /* 7. DAY & NIGHT CYCLE                                                       */
+    /* ========================================================================== */
     
     socket.on('day-phase-started', (data) => {
         appendToGameChat(`[NARRATOR]: ${data.message}`);

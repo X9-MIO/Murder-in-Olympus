@@ -1,0 +1,79 @@
+/* ============================= */
+/* Create Room Page (create-room.css) */
+/* ============================= */
+.create-room-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.create-room-page .card {
+    background: var(--card);
+    padding: 32px;
+    width: 360px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.create-room-page .card h1 {
+    margin: 0 0 6px;
+}
+
+.create-room-page .subtitle {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.create-room-page .field {
+    margin-bottom: 16px;
+}
+
+.create-room-page .field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.create-room-page .field input, 
+.create-room-page .field select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.create-room-page .field input:focus, 
+.create-room-page .field select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.create-room-page .error-message {
+    margin-top: 12px;
+    color: #ef4444; 
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.create-room-page .alt-action {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.create-room-page .alt-action a {
+    color: var(--accent);
+    text-decoration: none;
+    margin-left: 4px;
+}
+
+.create-room-page .alt-action a:hover {
+    text-decoration: underline;
+}

@@ -1,5 +1,5 @@
 /* ============================= */
-/* Game Page / Intro Animation */
+/* Game Page / Intro Animation (game.css) */
 /* ============================= */
 
 .game-page {
@@ -34,24 +34,16 @@
     opacity: 0; /* Start invisible */
 }
 
-/* ============================= */
 /* Triggering Classes */
-/* ============================= */
-
-/* Trigger Typewriter Animation */
 .page.game-page:not(.hidden) .typewriter {
     animation: typing 2.5s steps(20, end) forwards;
 }
 
-/* Trigger Fade In (with 2.5s delay) */
 .page.game-page:not(.hidden) .fade-in {
     animation: fadeIn 1s ease 2.5s forwards;
 }
 
-/* ============================= */
-/* Keyframes (The Animation logic) */
-/* ============================= */
-
+/* Keyframes */
 @keyframes typing {
   from { width: 0 }
   to { width: 100% } /* Expands width to reveal text */
@@ -69,7 +61,6 @@
     font-family: system-ui, sans-serif; /* Reset font for real game data */
 }
 
-
 /* ============================= */
 /* 3D Flipping Card */
 /* ============================= */
@@ -77,8 +68,7 @@
     width: 220px;
     height: 320px;
     margin: 40px auto;
-    /* Perspective tells the browser how 'deep' the 3D effect is */
-    perspective: 800px; 
+    perspective: 800px; /* How 'deep' the 3D effect is */
 }
 
 .card-inner {
@@ -98,8 +88,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    /* This hides the backside of the HTML element so you don't see it mirrored */
-    backface-visibility: hidden; 
+    backface-visibility: hidden; /* Hides the backside so you don't see it mirrored */
     border-radius: 16px;
     display: flex;
     flex-direction: column;
@@ -138,77 +127,53 @@
 
 
 
-
-
-
-
-
-
-
-
-/* Discussion Phase Layout */
-.discussion-layout { 
-    display: flex; 
-    justify-content: center; /* Centers everything */
-    align-items: center; /* Aligns them nicely in the middle vertically */
-    max-width: 900px; 
-    margin: 20px auto; 
-    gap: 40px; /* Space between the card, chat, and vote button */
+.game-board-title {
+    text-align: center;
+    margin-top: 50px;
+    font-family: 'VT323', monospace;
 }
 
-.discussion-side-panel { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    gap: 20px; 
-    width: 150px; 
+#role-text-container {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-/* Fixes the exploded image issue */
-.mini-card-image {
-    width: 140px; /* Lock the width so it stays small */
-    height: auto; 
-    object-fit: contain;
-    border-radius: 10px;
+#role-text-container h2 {
+    margin: 0;
+    color: var(--muted);
+    font-size: 1.2rem;
 }
 
-/* Discussion Chat overrides to match the lobby perfectly */
-.discussion-chat-override { 
-    height: 500px !important; /* Locks the height so it doesn't grow infinitely */
-    width: 350px !important;  /* Makes it look nicely proportioned in the center */
+#card-role-text {
+    font-size: 2.5rem;
+    margin: 10px 0;
+}
+
+/* Modifies the default card-scene specifically for this large view */
+.card-scene.large-scene {
+    width: 400px;
+    height: 700px;
+    margin: 0 auto;
+}
+
+/* Removes default card background/borders for the image cards */
+.card-face.transparent-face {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0;
     margin: 0;
 }
 
-#gameChatBox {
-    flex: 1;
-    overflow-y: auto; /* Forces the scrollbar when messages fill up */
-    padding: 16px;
-    background: rgba(2, 6, 23, 0.5);
-    display: flex;
-    flex-direction: column;
+.cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
 }
 
-/* Ensure the vote button looks good */
-.vote-btn { 
-    width: 80px; height: 80px; 
-    border-radius: 50%; 
-    background-color: #ef4444; color: white; border: 2px solid #991b1b; 
-    font-weight: bold; font-family: 'VT323', monospace; font-size: 1.5rem; 
-    cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.5); 
-    transition: transform 0.1s; 
-}
-.vote-btn:active { transform: scale(0.95); box-shadow: 0 2px 3px rgba(0,0,0,0.5); }
-
-/* Skip Discussion Button */
-#skipDiscussionBtn {
-    transition: background 0.2s ease;
-}
-
-#skipDiscussionBtn:hover:not(:disabled) {
-    background: #d97706 !important;
-}
-
-#skipDiscussionBtn:disabled {
-    background: #6b7280 !important;
-    cursor: not-allowed;
+#reveal-status-text {
+    text-align: center;
+    color: var(--muted);
+    margin-top: 20px;
 }
