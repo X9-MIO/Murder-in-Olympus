@@ -4,14 +4,20 @@
     <meta charset="UTF-8">
     <title>Murder in Olympus</title>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./src/main.css">
-    <link rel="stylesheet" href="./src/GameMessaging.css">
-    <link rel="stylesheet" href="./src/Lobby.css">
-    <link rel="stylesheet" href="./src/Game.css">
-    <link rel="stylesheet" href="./src/JoinLobby.css">
-    <link rel="stylesheet" href="./src/CreateRoom.css">
+    <link rel="stylesheet" href="./src/css_files/CreateRoom.css">
+    <link rel="stylesheet" href="./src/css_files/GameMessaging.css">
+    <link rel="stylesheet" href="./src/css_files/Lobby.css">
+    <link rel="stylesheet" href="./src/css_files/Game.css">
+    <link rel="stylesheet" href="./src/css_files/JoinLobby.css">
+    <link rel="stylesheet" href="./src/css_files/CreateRoom.css">
+    <link rel="stylesheet" href="./src/css_files/Day.css">
+    <link rel="stylesheet" href="./src/css_files/Night.css">
+    <link rel="stylesheet" href="./src/css_files/Main.css">
+
 </head>
 <body>
+
+    <!-- join  Lobby page -->
 
 <div class="page join-page" id="joinpage">
     <div class="card">
@@ -40,6 +46,13 @@
     </div>
 </div>
 
+
+<!-- join  Lobby page -->
+
+
+<!-- lobby page -->
+
+
 <div class="page lobby-page hidden" id="lobby">
     <button class="lobby-back-btn" id="backToJoinBtn">← Back</button>
 
@@ -64,6 +77,12 @@
     <button class="primary hidden" id="startgamebtn">Start Game</button>
 </div>
 
+<!-- lobby page -->
+
+
+
+<!-- create room page -->
+
 <div class="page create-room-page hidden" id="createroompage">
     <div class="card">
         <h1>Create Room</h1>
@@ -82,8 +101,7 @@
         <div class="field">
             <label>Number of Players</label>
             <select id="playercount">
-                <option value="2">2 players</option>
-                <option value="3">3 players</option>
+                
                 <option value="4">4 players</option>
                 <option value="5">5 players</option>
                 <option value="6">6 players</option>
@@ -110,6 +128,12 @@
     </div>
 </div>
 
+<!-- create room page -->
+
+
+
+<!-- game page -->
+
 <div class="page game-page hidden" id="gamepage">
     <div class="intro-screen">
         <div class="intro-main typewriter">Murder in Olympus</div>
@@ -119,9 +143,9 @@
     <div class="actual-game hidden" id="actualGameContent">
         <h1 class="game-board-title">Game Board</h1>
         
-        <div id="role-text-container" class="hidden">
-            <h2>You are the</h2>
-            <h3 id="card-role-text"></h3>
+        <div id="role-text-container">
+            <h2 id="role-prefix-text">You are...</h2>
+            <h3 id="card-role-text" style="opacity: 0;">&nbsp;</h3>
         </div>
         
        <div class="card-scene large-scene">
@@ -138,10 +162,14 @@
             </div>
         </div>
 
-        <p id="reveal-status-text">Revealing role in 5 seconds...</p>
     </div>
 </div>
 
+<!-- game page -->
+
+
+
+<!-- game messaging page  --> 
 <div class="page game-messaging-page hidden" id="gamemessagingpage">
     <h1 class="game-title discussion-title">Discussion Phase</h1>
     
@@ -151,8 +179,17 @@
         
         <div class="discussion-side-panel">
             <h3 class="role-label">Your Role</h3>
-            <img id="messaging-role-image" src="" alt="Role" class="mini-card-image">
-            <button id="skipDiscussionBtn" class="hidden">Skip Discussion</button>
+            <button id="toggleRoleBtn" class="primary">Hide Role</button>
+            <div class="card-scene mini-card-scene">
+                <div class="card-inner flipped" id="discussionRoleCard">
+                    <div class="card-face card-face-front transparent-face">
+                        <img src="/public/back_card.png" alt="Card Back" class="cover-image">
+                    </div>
+                    <div class="card-face card-face-back transparent-face">
+                        <img id="messaging-role-image" src="" alt="Role" class="cover-image">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="chat-container discussion-chat-override">
@@ -165,12 +202,70 @@
         </div>
         
         <div class="discussion-side-panel">
-            <button id="votebtn" class="vote-btn">VOTE</button>
+            <button id="openVoteMenuBtn" class="vote-btn">VOTE</button>
         </div>
 
     </div>
+
+    <div id="votingOverlay" class="hidden">
+        <div class="voting-modal">
+            <button id="closeVoteMenuBtn" class="close-btn">✖</button>
+            <h2>Cast Your Vote</h2>
+            <p>Who do you want to eliminate?</p>
+            
+            <div id="voting-buttons-container"></div>
+        </div>
+    </div>
+</div>
+<!-- game messaging page  --> 
+
+
+<!-- day page  --> 
+
+<div class="page day-page hidden" id="daypage">
+    <div class="phase-content day-content">
+        <h1 class="phase-title">THE DAY PHASE</h1>
+        <p id="day-message-text" class="phase-message"></p>
+    </div>
 </div>
 
-<script type="module" src="/src/main.js"></script>
+<!-- day page  --> 
+
+
+
+<!-- night page  --> 
+
+<div class="page night-page hidden" id="nightpage">
+    <div class="phase-content night-content">
+        <h1 class="phase-title">THE NIGHT PHASE</h1>
+        <p id="night-message-text" class="phase-message"></p>
+        
+        <div id="night-timer" class="phase-timer hidden">30s</div>
+        
+        <div id="night-action-container" class="hidden">
+            <select id="nightTargetSelect" class="target-select">
+                <option disabled selected>Choose a target...</option>
+            </select>
+            <button id="submitNightActionBtn" class="primary">Submit Action</button>
+        </div>
+        
+        <div id="night-waiting-text">Waiting for the night to end...</div>
+    </div>
+</div>
+
+<!-- night page  --> 
+
+<!-- game over page  --> 
+ <div class="page game-over-page hidden" id="gameoverpage">
+    <div class="phase-content">
+        <h1 class="phase-title" id="game-over-title">GAME OVER</h1>
+        <p id="game-over-message" class="phase-message"></p>
+        <button id="backToLobbyBtn" class="primary" style="margin-top: 30px;">Play Again</button>
+    </div>
+</div>
+
+<!-- game over page  -->
+
+<script type="module" src="/src/js_files/main.js"></script>
 </body>
 </html>

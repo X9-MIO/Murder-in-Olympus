@@ -55,3 +55,11 @@ button:hover {
     opacity: 0.9;
     transform: translateY(-1px);
 }
+
+.game-over-page {
+    background: #0f172a !important; /* Dark blue background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}

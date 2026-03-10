@@ -1,0 +1,34 @@
+.night-page {
+    background: #000000 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff; /* White text on black background */
+}
+
+.night-content {
+    padding: 40px;
+    text-align: center;
+    max-width: 600px;
+    width: 90%;
+    /* No borders, no background colors! */
+}
+
+.target-select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    color: black;
+}
+
+.phase-timer {
+    font-size: 2.5rem;
+    color: #ef4444; /* Bright red */
+    font-family: 'VT323', monospace;
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
