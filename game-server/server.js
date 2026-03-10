@@ -1,21 +1,22 @@
+console.log("server.js started");
 const crypto = require("crypto").webcrypto;
+const dbFns = require("./databaseFunction");
 const io = require("socket.io")(3000, {
   cors: {
     origin: "http://localhost:5173",
   },
 });
 
-/* ========================================================================== */
-/* STATE & DATA                                 */
-/* ========================================================================== */
-
-const rooms = {};
 const socketToUser = {};
+
+// Runtime-only state: timers / queues / handles
+const runtimeRooms = {};
 
 console.log("Socket.IO server running on port 3000");
 
+
 /* ========================================================================== */
-/* UTILITY FUNCTIONS                             */
+/* UTILITY FUNCTIONS                                                          */
 /* ========================================================================== */
 
 function generateRoomCode(length = 6) {
@@ -31,247 +32,272 @@ function generateRoomCode(length = 6) {
   return code;
 }
 
-function createUniqueRoom(existingRooms) {
-  var code;
+function createRuntimeRoom(roomCode) {
+  if (!runtimeRooms[roomCode]) {
+    runtimeRooms[roomCode] = {
+      actionQueue: [],
+      actionTimeout: null,
+      discussionTimer: null,
+    };
+  }
+}
+
+function clearRuntimeRoom(roomCode) {
+  if (!runtimeRooms[roomCode]) return;
+
+  if (runtimeRooms[roomCode].actionTimeout) {
+    clearTimeout(runtimeRooms[roomCode].actionTimeout);
+  }
+
+  if (runtimeRooms[roomCode].discussionTimer) {
+    clearTimeout(runtimeRooms[roomCode].discussionTimer);
+  }
+
+  delete runtimeRooms[roomCode];
+}
+
+function createUniqueRoomCode() {
+  let code;
   do {
     code = generateRoomCode(6);
-  } while (code in existingRooms);
+  } while (dbFns.getRoom(code));
   return code;
 }
 
-/* ========================================================================== */
-/* GAME LOOP LOGIC                                */
-/* ========================================================================== */
-
-function startDayPhase(roomCode) {
-    rooms[roomCode].gamePhase = 'day';
-    rooms[roomCode].nightActions = {}; // Reset night actions
-    
-    io.to(roomCode).emit('day-phase-started', {
-        message: "The sun rises over Olympus... The gods watch as mortals struggle for survival."
-    });
-    
-    // Day phase lasts 10 seconds, then night begins
-    setTimeout(() => {
-        startNightPhase(roomCode);
-    }, 10000);
+function getAlivePlayers(roomCode) {
+  return dbFns.getPlayers(roomCode).filter((p) => !p.eliminated);
 }
 
-function startNightPhase(roomCode) {
-    rooms[roomCode].gamePhase = 'night';
-    rooms[roomCode].nightActions = {};
-    rooms[roomCode].actionQueue = [];
+function getAlivePlayerNames(roomCode) {
+  return getAlivePlayers(roomCode).map((p) => p.display_name);
+}
 
-    io.to(roomCode).emit('night-phase-started', {
-        message: "This is the night phase. A werewolf will come and kill someone."
+function buildVoteCount(votes) {
+  const voteCount = {};
+  votes.forEach((vote) => {
+    voteCount[vote.target_name] = (voteCount[vote.target_name] || 0) + 1;
+  });
+  return voteCount;
+}
+
+/* ========================================================================== */
+/* GAME LOOP LOGIC                                                            */
+/* ========================================================================== */
+
+function startNightPhase(roomCode) {
+  const room = dbFns.getRoom(roomCode);
+  if (!room) return;
+
+  createRuntimeRoom(roomCode);
+  runtimeRooms[roomCode].actionQueue = [];
+
+  dbFns.updateRoomPhase(roomCode, "night");
+  dbFns.clearNightActions(roomCode);
+
+  io.to(roomCode).emit("night-phase-started", {
+    message: "This is the night phase. A werewolf will come and kill someone.",
+  });
+
+  const alivePlayers = getAlivePlayers(roomCode);
+
+  const playersWithRoles = alivePlayers.map((player) => ({
+    id: player.socket_id,
+    name: player.display_name,
+    role: player.role,
+  }));
+
+  const werewolf = playersWithRoles.find((p) => p.role === "Wolf");
+
+  if (werewolf) {
+    runtimeRooms[roomCode].actionQueue.push({
+      type: "werewolf-kill",
+      player: werewolf,
+      targets: playersWithRoles
+        .filter((p) => p.role !== "Wolf")
+        .map((p) => p.name),
     });
-    
-    // Get all connected players and their roles
-    const playerIds = Array.from(io.sockets.adapter.rooms.get(roomCode) || []);
-    const playersWithRoles = playerIds.map(playerId => ({
-        id: playerId,
-        name: socketToUser[playerId].displayName,
-        role: rooms[roomCode].playerRoles ? rooms[roomCode].playerRoles[playerId] : 'Villager'
-    }));
-    
-    // Find the werewolf
-    const werewolf = playersWithRoles.find(p => p.role === 'Wolf');
-    if (werewolf) {
-        rooms[roomCode].actionQueue.push({
-            type: 'werewolf-kill',
-            player: werewolf,
-            targets: playersWithRoles.filter(p => p.role !== 'Wolf' && !rooms[roomCode].eliminatedPlayers.has(p.name)).map(p => p.name)
-        });
-    }
-    
-    // Add other roles here later (Detective, Doctor, etc.)
-    
-    // Start processing night actions
-    processNextNightAction(roomCode);
+  }
+
+  processNextNightAction(roomCode);
 }
 
 function processNextNightAction(roomCode) {
-    if (rooms[roomCode].actionQueue.length === 0) {
-        // All night actions complete, reveal results
-        setTimeout(() => {
-            revealNightActions(roomCode);
-        }, 2000);
-        return;
-    }
-    
-    const action = rooms[roomCode].actionQueue.shift();
-    
-    if (action.type === 'werewolf-kill') {
-        // Tell werewolf to choose a victim
-        io.to(action.player.id).emit('night-action-required', {
-            type: 'werewolf-kill',
-            targets: action.targets,
-            message: 'Choose a player to eliminate tonight...',
-            duration: 20 // 20 seconds to choose
-        });
-    }
-    
+  const room = dbFns.getRoom(roomCode);
+  if (!room) return;
 
-    rooms[roomCode].actionTimeout = setTimeout(() => {
-        // Action timed out, skip to next
-        processNextNightAction(roomCode);
-    }, 20000);
+  createRuntimeRoom(roomCode);
+
+  if (runtimeRooms[roomCode].actionQueue.length === 0) {
+    setTimeout(() => {
+      revealNightActions(roomCode);
+    }, 2000);
+    return;
+  }
+
+  const action = runtimeRooms[roomCode].actionQueue.shift();
+
+  if (action.type === "werewolf-kill") {
+    io.to(action.player.id).emit("night-action-required", {
+      type: "werewolf-kill",
+      targets: action.targets,
+      message: "Choose a player to eliminate tonight...",
+      duration: 20,
+    });
+  }
+
+  runtimeRooms[roomCode].actionTimeout = setTimeout(() => {
+    processNextNightAction(roomCode);
+  }, 20000);
 }
 
 function revealNightActions(roomCode) {
-    rooms[roomCode].gamePhase = 'action-reveal';
-    
-    // Get all night actions
-    const actions = Object.values(rooms[roomCode].nightActions);
-    
-    // Process werewolf kill
-    const werewolfKill = actions.find(action => action.type === 'werewolf-kill');
-    if (werewolfKill) {
-        // Remove the killed player
-        rooms[roomCode].players = rooms[roomCode].players.filter(p => p !== werewolfKill.target);
-        rooms[roomCode].eliminatedPlayers.add(werewolfKill.target);
-    }
-    
-    // 1. Tell everyone who died (Show the Day Page)
-    io.to(roomCode).emit('night-actions-revealed', {
-        actions: actions,
-        eliminatedPlayer: werewolfKill ? werewolfKill.target : null,
-        message: "The night has passed... Here is what transpired:"
+  const room = dbFns.getRoom(roomCode);
+  if (!room) return;
+
+  dbFns.updateRoomPhase(roomCode, "action-reveal");
+
+  const actions = dbFns.getNightActions(roomCode);
+  const werewolfKill = actions.find((action) => action.action_type === "werewolf-kill");
+
+  if (werewolfKill && werewolfKill.target_name) {
+    dbFns.eliminatePlayerByName(roomCode, werewolfKill.target_name);
+  }
+
+  io.to(roomCode).emit("night-actions-revealed", {
+    actions,
+    eliminatedPlayer: werewolfKill ? werewolfKill.target_name : null,
+    message: "The night has passed... Here is what transpired:",
+  });
+
+  const winner = checkGameOver(roomCode);
+
+  if (winner) {
+    dbFns.setWinner(roomCode, winner);
+    dbFns.updateRoomPhase(roomCode, "game_over");
+
+    setTimeout(() => {
+      io.to(roomCode).emit("game-over", {
+        winner,
+        message:
+          winner === "Villagers"
+            ? "The Werewolf has been eliminated! The village is safe."
+            : "The Werewolf has overpowered the village!",
+      });
+    }, 8000);
+    return;
+  }
+
+  setTimeout(() => {
+    startDiscussionPhase(roomCode);
+  }, 10000);
+}
+
+function startDiscussionPhase(roomCode) {
+  const room = dbFns.getRoom(roomCode);
+  if (!room) return;
+
+  createRuntimeRoom(roomCode);
+
+  dbFns.updateRoomPhase(roomCode, "discussion");
+  dbFns.clearVotes(roomCode);
+
+  setTimeout(() => {
+    io.to(roomCode).emit("discussion-phase-started", {
+      players: getAlivePlayerNames(roomCode),
+      duration: 90,
     });
-    
-    // 2. NOW check if that death ended the game
-    const winner = checkGameOver(roomCode);
-    
-    if (winner) {
-        // If the game is over, wait 8 seconds for people to read the morning death message, 
-        // then trigger the Game Over screen
-        setTimeout(() => {
-            io.to(roomCode).emit('game-over', {
-                winner: winner,
-                message: winner === 'Villagers' ? 'The Werewolf has been eliminated! The village is safe.' : 'The Werewolf has overpowered the village!'
-            });
-        }, 8000); 
-        return; // STOP the game loop here so it doesn't go to discussion
-    }
-    
-    // 3. If the game is NOT over, proceed to the discussion phase as normal
-    setTimeout(() => {
-        startNewDiscussionPhase(roomCode);
-    }, 10000); // 10 seconds to read the morning message
+
+    runtimeRooms[roomCode].discussionTimer = setTimeout(() => {
+      endVotingPhase(roomCode);
+    }, 90000);
+  }, 2000);
 }
-
-function startNewDiscussionPhase(roomCode) {
-    rooms[roomCode].gamePhase = 'discussion';
-    rooms[roomCode].votes = {}; // Track votes immediately! {playerId: targetPlayerName or 'skip'}
-    
-    setTimeout(() => {
-        io.to(roomCode).emit('discussion-phase-started', {
-            players: rooms[roomCode].players,
-            duration: 90 // Let's give 90 seconds since voting is happening concurrently
-        });
-        
-        rooms[roomCode].discussionTimer = setTimeout(() => {
-            endVotingPhase(roomCode); // Discussion ending automatically ends the voting
-        }, 90000);
-    }, 2000);
-}
-
-
 
 function endVotingPhase(roomCode) {
-    const votes = rooms[roomCode].votes;
-    const voteCount = {};
-    
-    // If NO ONE voted at all (timer ran out), default to skip
-    if (Object.keys(votes).length === 0) {
-        voteCount['skip'] = 1;
-    } else {
-        // Count the votes
-        Object.values(votes).forEach(targetName => {
-            voteCount[targetName] = (voteCount[targetName] || 0) + 1;
-        });
-    }
-    // Find the option with the most votes
-    let eliminated = Object.keys(voteCount).reduce((a, b) => 
-        voteCount[a] > voteCount[b] ? a : b
-    );
+  const room = dbFns.getRoom(roomCode);
+  if (!room) return;
 
-    // Tie-breaker logic: If there is a tie for the most votes, default to 'skip'
-    const maxVotes = voteCount[eliminated];
-    const tiedOptions = Object.keys(voteCount).filter(key => voteCount[key] === maxVotes);
-    if (tiedOptions.length > 1) {
-        eliminated = 'skip';
-    }
-    
-    // Only eliminate someone if "skip" didn't win
-    if (eliminated !== 'skip') {
-        rooms[roomCode].players = rooms[roomCode].players.filter(p => p !== eliminated);
-        if (!rooms[roomCode].eliminatedPlayers) rooms[roomCode].eliminatedPlayers = new Set();
-        rooms[roomCode].eliminatedPlayers.add(eliminated);
-    }
-    
-    // 1. Tell everyone who was voted out
-    io.to(roomCode).emit('player-eliminated', {
-        name: eliminated,
-        voteCount: voteCount[eliminated]
-    });
-    
-    // 2. NOW check if that vote ended the game
-    const winner = checkGameOver(roomCode);
-    
-    if (winner) {
-        // If the game is over, wait 6 seconds to read the vote results, then show Game Over
-        setTimeout(() => {
-            io.to(roomCode).emit('game-over', {
-                winner: winner,
-                message: winner === 'Villagers' ? 'The Werewolf has been eliminated! The village is safe.' : 'The Werewolf has overpowered the village!'
-            });
-        }, 6000); 
-        return; // STOP the game loop here
-    }
-    
-    // 3. If the game is NOT over, proceed to the Night Phase
+  const votes = dbFns.getVotes(roomCode);
+  let voteCount = {};
+
+  if (votes.length === 0) {
+    voteCount["skip"] = 1;
+  } else {
+    voteCount = buildVoteCount(votes);
+  }
+
+  let eliminated = Object.keys(voteCount).reduce((a, b) =>
+    voteCount[a] > voteCount[b] ? a : b
+  );
+
+  const maxVotes = voteCount[eliminated];
+  const tiedOptions = Object.keys(voteCount).filter(
+    (key) => voteCount[key] === maxVotes
+  );
+
+  if (tiedOptions.length > 1) {
+    eliminated = "skip";
+  }
+
+  if (eliminated !== "skip") {
+    dbFns.eliminatePlayerByName(roomCode, eliminated);
+  }
+
+  io.to(roomCode).emit("player-eliminated", {
+    name: eliminated,
+    voteCount: voteCount[eliminated],
+  });
+
+  const winner = checkGameOver(roomCode);
+
+  if (winner) {
+    dbFns.setWinner(roomCode, winner);
+    dbFns.updateRoomPhase(roomCode, "game_over");
+
     setTimeout(() => {
-        startNightPhase(roomCode);
-    }, 5000);
-}
+      io.to(roomCode).emit("game-over", {
+        winner,
+        message:
+          winner === "Villagers"
+            ? "The Werewolf has been eliminated! The village is safe."
+            : "The Werewolf has overpowered the village!",
+      });
+    }, 6000);
+    return;
+  }
 
+  setTimeout(() => {
+    startNightPhase(roomCode);
+  }, 5000);
+}
 
 function checkGameOver(roomCode) {
-    const room = rooms[roomCode];
-    if (!room) return null;
+  const players = dbFns.getPlayers(roomCode);
+  if (!players || players.length === 0) return null;
 
-    let aliveWolves = 0;
-    let aliveVillagers = 0;
+  let aliveWolves = 0;
+  let aliveVillagers = 0;
 
-    // Loop through all original roles to see who is still alive
-    Object.keys(room.playerRoles).forEach(socketId => {
-        const user = socketToUser[socketId];
-        
-        // Make sure the user exists AND they haven't been eliminated
-        if (user && !room.eliminatedPlayers.has(user.displayName)) {
-            if (room.playerRoles[socketId] === 'Wolf') {
-                aliveWolves++;
-            } else {
-                aliveVillagers++;
-            }
-        }
-    });
+  players.forEach((player) => {
+    if (!player.eliminated) {
+      if (player.role === "Wolf") {
+        aliveWolves++;
+      } else {
+        aliveVillagers++;
+      }
+    }
+  });
 
-    console.log(`Checking Win State: Wolves(${aliveWolves}) vs Villagers(${aliveVillagers})`);
+  console.log(`Checking Win State: Wolves(${aliveWolves}) vs Villagers(${aliveVillagers})`);
 
-    // Win Conditions
-    if (aliveWolves === 0) return 'Villagers';
-    
-    // If the number of wolves is equal to or greater than the villagers, wolves win
-    if (aliveWolves >= aliveVillagers && aliveWolves > 0) return 'Werewolf'; 
-    
-    return null; // Game is not over yet
+  if (aliveWolves === 0) return "Villagers";
+  if (aliveWolves >= aliveVillagers && aliveWolves > 0) return "Werewolf";
+
+  return null;
 }
 
-
 /* ========================================================================== */
-/* SOCKET EVENTS                                   */
+/* SOCKET EVENTS                                                              */
 /* ========================================================================== */
 
 io.on("connection", (socket) => {
@@ -280,215 +306,190 @@ io.on("connection", (socket) => {
   /* ---------------------- Disconnect Handling ---------------------- */
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
+
     const user = socketToUser[socket.id];
+    if (!user) return;
 
-    if (user) {
-      const roomCode = user.roomCode;
-      const displayName = user.displayName;
+    const { roomCode, displayName } = user;
+    const room = dbFns.getRoom(roomCode);
 
-      if (rooms[roomCode]) {
-        // Did the CREATOR just disconnect?
-        if (rooms[roomCode].creatorId === socket.id) {
-          
-          // Tell everyone else in the room to leave!
-          io.to(roomCode).emit('host-disconnected');
-          
-          // Nuke the room from the server memory
-          delete rooms[roomCode];
-          console.log("Room " + roomCode + " deleted because the host left.");
-          
+    if (room) {
+      if (room.creator_socket_id === socket.id) {
+        io.to(roomCode).emit("host-disconnected");
+        dbFns.deleteRoom(roomCode);
+        clearRuntimeRoom(roomCode);
+        console.log(`Room ${roomCode} deleted because the host left.`);
+      } else {
+        dbFns.removePlayer(socket.id);
+
+        const updatedPlayers = dbFns
+          .getPlayers(roomCode)
+          .filter((p) => !p.eliminated)
+          .map((p) => p.display_name);
+
+        io.to(roomCode).emit("update-players", updatedPlayers);
+
+        if (dbFns.getPlayers(roomCode).length === 0) {
+          dbFns.deleteRoom(roomCode);
+          clearRuntimeRoom(roomCode);
+          console.log(`Room ${roomCode} deleted because it is empty.`);
         } else {
-          // A normal player disconnected. Just remove them from the list.
-          rooms[roomCode].players = rooms[roomCode].players.filter(name => name !== displayName);
-          io.to(roomCode).emit('update-players', rooms[roomCode].players);
-
-          if (rooms[roomCode].players.length === 0) {
-            delete rooms[roomCode];
-            console.log("Room " + roomCode + " deleted because it is empty.");
-          }
+          console.log(`${displayName} removed from room ${roomCode}.`);
         }
       }
-
-      delete socketToUser[socket.id];
     }
+
+    delete socketToUser[socket.id];
   });
 
+  /* ---------------------- Create Room ---------------------- */
+  socket.on("create-room", (roomName, numberOfPlayer, creatorname) => {
+    const code = createUniqueRoomCode();
 
-  /* ---------------------- Room Management ---------------------- */
-  socket.on('create-room', (roomName, numberOfPlayer, creatorname) => {
-    // 1. Generate a unique code
-    const code = createUniqueRoom(rooms);
-    
-    // 2. Save the room data
-    rooms[code] = {
-      roomName: roomName,
-      numberOfPlayers: numberOfPlayer,
-      players: [creatorname],
-      creatorId: socket.id,
-      gamePhase: 'lobby', // Good practice to initialize the phase immediately
-      eliminatedPlayers: new Set() // Initialize this early too
-    };
-    
-    // 3. Register the user internally
-    socketToUser[socket.id] = { 
-        roomCode: code, 
-        displayName: creatorname 
+    dbFns.createRoom(code, roomName, numberOfPlayer, socket.id);
+    dbFns.addPlayer(code, socket.id, creatorname, 1);
+
+    socketToUser[socket.id] = {
+      roomCode: code,
+      displayName: creatorname,
     };
 
-    // 4. ACTUALLY join the Socket.IO room
+    createRuntimeRoom(code);
     socket.join(code);
-    console.log(`${creatorname} created and joined room: ${code}`);
-    
-    // 5. Send the new code back to the creator so they can transition to the lobby
-    socket.emit('room-created', code); 
-    
-    // 6. Update the player list (even though it's just them right now)
-    io.to(code).emit('update-players', rooms[code].players);
+
+    socket.emit("room-created", code);
+
+    const players = dbFns.getPlayers(code).map((p) => p.display_name);
+    io.to(code).emit("update-players", players);
   });
 
+  /* ---------------------- Check Room ---------------------- */
+  socket.on("check-if-room-exists", (roomCode) => {
+    const room = dbFns.getRoom(roomCode);
 
-  /* ---------------------- Join Room Logic ---------------------- */
-  
-  // 1. Check if the room is valid before letting them join
-  socket.on('check-if-room-exists', (roomCode) => {
-    if (roomCode in rooms) {
-      if (rooms[roomCode].players.length >= rooms[roomCode].numberOfPlayers) {
-        socket.emit('RoomCheck', 'full'); 
-      } else {
-        socket.emit('RoomCheck', 'exists'); 
-      }
-    } else {
-      socket.emit('RoomCheck', 'not-found'); 
-    }
-  });
-
-  // 2. Actually join the room
-  socket.on('join-room', (roomCode, displayName) => {
-    // Double check it isn't full just in case
-    if(rooms[roomCode].players.length >= rooms[roomCode].numberOfPlayers) {
-      socket.emit('room-full', roomCode);
+    if (!room) {
+      socket.emit("RoomCheck", "not-found");
       return;
     }
-    
+
+    const players = dbFns.getPlayers(roomCode);
+    if (players.length >= room.number_of_players) {
+      socket.emit("RoomCheck", "full");
+      return;
+    }
+
+    socket.emit("RoomCheck", "exists");
+  });
+
+  /* ---------------------- Join Room ---------------------- */
+  socket.on("join-room", (roomCode, displayName) => {
+    const room = dbFns.getRoom(roomCode);
+
+    if (!room) {
+      socket.emit("RoomCheck", "not-found");
+      return;
+    }
+
+    const players = dbFns.getPlayers(roomCode);
+    if (players.length >= room.number_of_players) {
+      socket.emit("room-full", roomCode);
+      return;
+    }
+
     socket.join(roomCode);
-    console.log(`${displayName} joined room: ${roomCode}`);
-    
-    if (rooms[roomCode]) {
-      rooms[roomCode].players.push(displayName);
+    dbFns.addPlayer(roomCode, socket.id, displayName, 0);
 
-      // Remember this socket's info!
-      socketToUser[socket.id] = { roomCode: roomCode, displayName: displayName };
-      
-      // Tell everyone in the room to update their player list
-      io.to(roomCode).emit('update-players', rooms[roomCode].players);
-    }
+    socketToUser[socket.id] = { roomCode, displayName };
+
+    const updatedPlayers = dbFns.getPlayers(roomCode).map((p) => p.display_name);
+    io.to(roomCode).emit("update-players", updatedPlayers);
   });
 
-  /* ---------------------- Chat & Communication ---------------------- */
-  socket.on('send-message', (roomCode, message) => {
+  /* ---------------------- Chat ---------------------- */
+  socket.on("send-message", (roomCode, message) => {
     const user = socketToUser[socket.id];
-    // Check if player is eliminated
-    if (user && rooms[roomCode] && (!rooms[roomCode].eliminatedPlayers || !rooms[roomCode].eliminatedPlayers.has(user.displayName))) {
-      socket.to(roomCode).emit("receive-message", message);
-    }
+    if (!user) return;
+
+    const player = dbFns.getPlayerBySocket(socket.id);
+    if (!player || player.eliminated) return;
+
+    dbFns.saveMessage(roomCode, socket.id, user.displayName, message);
+
+    io.to(roomCode).emit("receive-message", {
+      sender: user.displayName,
+      text: message,
+    });
   });
 
-  /* ---------------------- Game Actions ---------------------- */
-  // Host wants to start the game
-  socket.on('start-game', (roomCode) => {
-      if (rooms[roomCode] && rooms[roomCode].creatorId === socket.id) {
-          console.log("Host is starting game in room: " + roomCode);
-          
-          // 1. Ask Socket.IO for the hidden IDs of everyone currently inside this room
-          const playerIds = Array.from(io.sockets.adapter.rooms.get(roomCode) || []);
-          
-          // 2. Shuffle the players randomly
-          const shuffledPlayers = playerIds.sort(() => Math.random() - 0.5);
-          
-          // Store player roles for night actions
-          rooms[roomCode].playerRoles = {};
-          shuffledPlayers.forEach((playerId, index) => {
-              let assignedRole = "Villager"; // Default role
-              
-              if (index === 0) {
-                  assignedRole = "Wolf"; // The first random person gets to be the killer
-              }
-              
-              rooms[roomCode].playerRoles[playerId] = assignedRole;
-              // You can add more roles here later! (e.g., if index === 1, role = "Detective")
+  /* ---------------------- Start Game ---------------------- */
+  socket.on("start-game", (roomCode) => {
+    const room = dbFns.getRoom(roomCode);
+    if (!room || room.creator_socket_id !== socket.id) return;
 
-              // 4. Send this role PRIVATELY to this specific player only!
-              io.to(playerId).emit('receive-role', assignedRole);
-          });
-          
-          // 5. Finally, tell the whole room to play the intro animation
-          io.to(roomCode).emit('game-starting');
+    const players = dbFns.getPlayers(roomCode);
+    const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
 
-          rooms[roomCode].votes = {}; // Track votes: {playerId: targetPlayerName}
-          rooms[roomCode].gamePhase = 'day';
-          rooms[roomCode].discussionTimer = null;
-          rooms[roomCode].votingTimer = null;
-          rooms[roomCode].skippedPlayers = new Set(); // Track who has skipped
-          rooms[roomCode].eliminatedPlayers = new Set(); // Track eliminated players by name
+    shuffledPlayers.forEach((player, index) => {
+      const role = index === 0 ? "Wolf" : "Villager";
+      dbFns.assignRole(player.socket_id, role);
+      io.to(player.socket_id).emit("receive-role", role);
+    });
 
-          // After the reveal animation we immediately begin the day/night cycle
-          setTimeout(() => {
-              startNightPhase(roomCode);
-          }, 17000); // 17 seconds to allow for role reveal animation
+    dbFns.updateRoomPhase(roomCode, "starting");
+    io.to(roomCode).emit("game-starting");
+
+    setTimeout(() => {
+      startNightPhase(roomCode);
+    }, 17000);
+  });
+
+  /* ---------------------- Voting ---------------------- */
+  socket.on("cast-vote", (roomCode, targetPlayerName) => {
+    const room = dbFns.getRoom(roomCode);
+    if (!room || room.game_phase !== "discussion") return;
+
+    const player = dbFns.getPlayerBySocket(socket.id);
+    if (!player || player.eliminated) return;
+
+    dbFns.saveVote(roomCode, socket.id, targetPlayerName);
+
+    const votes = dbFns.getVotes(roomCode);
+    const voteCount = buildVoteCount(votes);
+
+    io.to(roomCode).emit("live-vote-update", voteCount);
+
+    const alivePlayers = getAlivePlayers(roomCode);
+    if (votes.length >= alivePlayers.length) {
+      if (runtimeRooms[roomCode]?.discussionTimer) {
+        clearTimeout(runtimeRooms[roomCode].discussionTimer);
+        runtimeRooms[roomCode].discussionTimer = null;
       }
-  });
-
- socket.on('cast-vote', (roomCode, targetPlayerName) => {
-    if (rooms[roomCode] && rooms[roomCode].gamePhase === 'discussion') {
-        // Record the vote
-        rooms[roomCode].votes[socket.id] = targetPlayerName;
-        
-        // Calculate current tallies to send back to clients instantly
-        const voteCount = {};
-        Object.values(rooms[roomCode].votes).forEach(target => {
-            voteCount[target] = (voteCount[target] || 0) + 1;
-        });
-
-        // Tell everyone the new totals
-        io.to(roomCode).emit('live-vote-update', voteCount);
-
-        // Check if everyone alive has voted
-        const playerIds = Array.from(io.sockets.adapter.rooms.get(roomCode) || []);
-        const activePlayerIds = playerIds.filter(id => {
-            const p = socketToUser[id];
-            return p && !rooms[roomCode].eliminatedPlayers.has(p.displayName);
-        });
-
-        if (Object.keys(rooms[roomCode].votes).length >= activePlayerIds.length) {
-            if (rooms[roomCode].discussionTimer) {
-                clearTimeout(rooms[roomCode].discussionTimer);
-                rooms[roomCode].discussionTimer = null;
-            }
-            endVotingPhase(roomCode);
-        }
+      endVotingPhase(roomCode);
     }
   });
 
- 
-  
+  /* ---------------------- Night Action ---------------------- */
+  socket.on("submit-night-action", (roomCode, actionData) => {
+    const room = dbFns.getRoom(roomCode);
+    if (!room || room.game_phase !== "night") return;
 
-  socket.on('submit-night-action', (roomCode, actionData) => {
-    if (rooms[roomCode] && rooms[roomCode].gamePhase === 'night') {
-        // Store the action
-        rooms[roomCode].nightActions[socket.id] = {
-            player: socketToUser[socket.id].displayName,
-            role: rooms[roomCode].playerRoles[socket.id],
-            ...actionData
-        };
-        
-        // Clear the action timeout
-        if (rooms[roomCode].actionTimeout) {
-            clearTimeout(rooms[roomCode].actionTimeout);
-            rooms[roomCode].actionTimeout = null;
-        }
-        
-        // Process next action
-        processNextNightAction(roomCode);
+    const player = dbFns.getPlayerBySocket(socket.id);
+    if (!player || player.eliminated) return;
+
+    dbFns.saveNightAction(
+      roomCode,
+      socket.id,
+      player.display_name,
+      player.role,
+      actionData.type,
+      actionData.target || null
+    );
+
+    if (runtimeRooms[roomCode]?.actionTimeout) {
+      clearTimeout(runtimeRooms[roomCode].actionTimeout);
+      runtimeRooms[roomCode].actionTimeout = null;
     }
+
+    processNextNightAction(roomCode);
   });
 });
