@@ -175,11 +175,12 @@ export function setupGameLogic(socket, gameState) {
             const tickBtn = document.createElement('button');
             tickBtn.classList.add('tick-btn');
             
-            const tickImage = document.createElement('img');
-            tickImage.src = '/public/tick.png'; 
-            tickImage.alt = 'Vote';
-            tickImage.classList.add('tick-icon');
-            tickBtn.appendChild(tickImage);
+            // This creates a perfect, transparent checkmark that automatically changes color!
+            tickBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" class="tick-icon">
+                    <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+            `;
 
             tickBtn.onclick = () => {
                 if (gameState.hasVoted) return; 
