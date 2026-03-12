@@ -14,10 +14,22 @@ To run this project locally, you will need to start both the **Game Server** and
 
 First, clone the repository and install the dependencies for both parts of the application.
 
+also you need to install better-sqlite3
+
+
+
 **For the Backend:**
 ```bash
+cd Murder-in-Olympus
 cd game-server
 npm install
+```
+
+
+**For the Backend:**
+```bash
+cd Murder-in-Olympus
+npm install better-sqlite3
 ```
 
 ### 2. Run the server.js

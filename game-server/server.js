@@ -415,10 +415,7 @@ io.on("connection", (socket) => {
 
     dbFns.saveMessage(roomCode, socket.id, user.displayName, message);
 
-    io.to(roomCode).emit("receive-message", {
-      sender: user.displayName,
-      text: message,
-    });
+    socket.to(roomCode).emit("receive-message",message);
   });
 
   /* ---------------------- Start Game ---------------------- */
