@@ -320,3 +320,50 @@
     object-fit: contain !important; /* Keeps the aspect ratio correct so it doesn't stretch */
     display: block !important;
 }
+
+
+
+
+/* 1. Base style for ALL player sidebars (Lobby & Game) */
+.players {
+    width: 250px;
+    padding: 20px;
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+/* 2. Specific override just for the Game Phase version */
+.players.in-game {
+    height: 500px !important; 
+    overflow-y: auto;
+}
+
+/* 3. Text and layout styling */
+.players h3 {
+    margin-top: 0;
+    text-align: center;
+    color: var(--accent);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.players ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.players li {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+}
+
+/* 4. The automatic Green Dot */
+.players li::before {
+    content: "🟢"; 
+    font-size: 0.5rem;
+    margin-right: 10px;
+}

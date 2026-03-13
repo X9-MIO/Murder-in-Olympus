@@ -88,10 +88,6 @@
         <h1>Create Room</h1>
         <p class="subtitle">Set up your lobby</p>
 
-        <div class="field">
-            <label>Room Name</label>
-            <input type="text" id="roomname" placeholder="Room Name">
-        </div>
 
         <div class="field">
             <label>Display Name</label>
@@ -205,7 +201,14 @@
             <button id="openVoteMenuBtn" class="vote-btn">VOTE</button>
         </div>
 
+        <aside class="players in-game">
+            <h3>Players</h3>
+            <ul id ="game-players-list"></ul>
+        </aside>
+
     </div>
+   
+    
 
     <div id="votingOverlay" class="hidden">
         <div class="voting-modal">
@@ -219,6 +222,8 @@
             <div id="voting-buttons-container"></div>
         </div>
     </div>
+
+
 </div>
 <!-- game messaging page  --> 
 

@@ -2,11 +2,11 @@ const db = require("./db");
 console.log("databaseFunctions.js loaded");
 
 // Room functions
-function createRoom(roomCode, roomName, numberOfPlayers, creatorSocketId) {
+function createRoom(roomCode, numberOfPlayers, creatorSocketId) {
   db.prepare(`
-    INSERT INTO rooms (room_code, room_name, number_of_players, creator_socket_id, game_phase)
-    VALUES (?, ?, ?, ?, 'lobby')
-  `).run(roomCode, roomName, numberOfPlayers, creatorSocketId);
+    INSERT INTO rooms (room_code, number_of_players, creator_socket_id, game_phase)
+    VALUES (?, ?, ?, 'lobby')
+  `).run(roomCode, numberOfPlayers, creatorSocketId);
 }
 
 function getRoom(roomCode) {

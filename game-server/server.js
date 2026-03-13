@@ -343,10 +343,11 @@ io.on("connection", (socket) => {
   });
 
   /* ---------------------- Create Room ---------------------- */
-  socket.on("create-room", (roomName, numberOfPlayer, creatorname) => {
+  socket.on("create-room", (numberOfPlayer, creatorname) => {
     const code = createUniqueRoomCode();
 
-    dbFns.createRoom(code, roomName, numberOfPlayer, socket.id);
+    // Call the updated db function without roomName
+    dbFns.createRoom(code, numberOfPlayer, socket.id);
     dbFns.addPlayer(code, socket.id, creatorname, 1);
 
     socketToUser[socket.id] = {
@@ -489,4 +490,21 @@ io.on("connection", (socket) => {
 
     processNextNightAction(roomCode);
   });
+  /* ---------------------- Play Again / Reset ---------------------- */
+  socket.on("play-again", (roomCode) => {
+    const room = dbFns.getRoom(roomCode);
+    if (!room) return;
+
+    // 1. Reset the database roles, votes, and game phase
+    dbFns.resetRoomForNewGame(roomCode);
+
+    // 2. Tell everyone in the room to go back to the lobby
+    io.to(roomCode).emit('room-reset');
+
+    // 3. Send a fresh list of alive players (so the green dots come back!)
+    const players = dbFns.getPlayers(roomCode).map((p) => p.display_name);
+    io.to(roomCode).emit("update-players", players);
+  });
+
+
 });

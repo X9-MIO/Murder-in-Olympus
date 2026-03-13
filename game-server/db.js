@@ -23,7 +23,6 @@ db.prepare(`
 db.prepare(`
   CREATE TABLE IF NOT EXISTS rooms (
     room_code TEXT PRIMARY KEY,
-    room_name TEXT NOT NULL,
     number_of_players INTEGER NOT NULL,
     creator_socket_id TEXT NOT NULL,
     game_phase TEXT NOT NULL DEFAULT 'lobby',

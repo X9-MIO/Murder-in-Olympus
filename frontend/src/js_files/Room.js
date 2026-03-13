@@ -17,16 +17,16 @@ export function setupRoomLogic(socket, gameState) {
   // --- Create Room ---
   document.getElementById("createroombtn").addEventListener('click', () => {
     const creatorName = document.getElementById("create-displayname").value.trim();
-    const roomName = document.getElementById("roomname").value.trim();
     const numberOfPlayers = Number(document.getElementById("playercount").value);
 
-    if(creatorName === "" || roomName === "") {
+    if(creatorName === "") {
       displayError("create-error", "Fields cannot be empty");
       return;
     }
 
     gameState.currentDisplayName = creatorName;
-    socket.emit('create-room', roomName, numberOfPlayers, gameState.currentDisplayName);
+    
+    socket.emit('create-room', numberOfPlayers, creatorName);
   });
 
   socket.on('room-created', (newRoomCode) => {
@@ -66,23 +66,30 @@ export function setupRoomLogic(socket, gameState) {
     });
   });
 
+  
+
   // --- Lobby Updates ---
   socket.on('update-players', (playersArray) => {
+    // 1. Update the Lobby list
     const playersList = document.getElementById("players-list");
-    if (!playersList) return;
-    playersList.innerHTML = ""; 
-    playersArray.forEach(playerName => {
-      const li = document.createElement("li");
-      li.textContent = playerName;
-      playersList.appendChild(li);
-    });
-  });
+    if (playersList) {
+      playersList.innerHTML = ""; 
+      playersArray.forEach(playerName => {
+        const li = document.createElement("li");
+        li.textContent = playerName;
+        playersList.appendChild(li);
+      });
+    }
 
-  socket.on('host-disconnected', () => {
-    showPage("joinpage");
-    displayError("join-error", "The host disconnected. The room was closed.");
-    gameState.currentRoom = "";
-    gameState.currentDisplayName = "";
-    document.getElementById("startgamebtn").classList.add("hidden");
+    
+    const gamePlayersList = document.getElementById("game-players-list");
+    if (gamePlayersList) {
+        gamePlayersList.innerHTML = "";
+        playersArray.forEach(playerName => {
+            const li = document.createElement("li");
+            li.textContent = playerName;
+            gamePlayersList.appendChild(li);
+        });
+    }
   });
 }

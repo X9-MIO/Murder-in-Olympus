@@ -8,7 +8,6 @@ export function setupGameLogic(socket, gameState) {
     /* ========================================================================== */
     
     let discussionCountdownInterval = null;
-    let discussionEndTimeout = null;
     let nightCountdownInterval = null;
 
     /* ========================================================================== */
@@ -40,6 +39,7 @@ export function setupGameLogic(socket, gameState) {
     });
 
     socket.on('game-starting', () => {
+        
         showPage("gamepage"); 
         
         const rolePrefix = document.getElementById("role-prefix-text");
@@ -250,10 +250,12 @@ export function setupGameLogic(socket, gameState) {
             if (!gameState.eliminatedPlayers) gameState.eliminatedPlayers = new Set();
             gameState.eliminatedPlayers.add(data.name);
 
-            const playersList = document.getElementById("players-list");
-            if (playersList) {
-                const items = playersList.querySelectorAll('li');
-                items.forEach(item => { if (item.textContent === data.name) item.remove(); });
+            const gamePlayersList = document.getElementById("game-players-list");
+            if (gamePlayersList) {
+                const items = gamePlayersList.querySelectorAll('li');
+                items.forEach(item => { 
+                    if (item.textContent.trim() === data.name) item.remove(); 
+                });
             }
         }
 
@@ -399,10 +401,10 @@ export function setupGameLogic(socket, gameState) {
         showPage('daypage'); 
         
         let morningMessage = "The sun rises over Olympus. ";
-        const killAction = data.actions.find(a => a.type === 'werewolf-kill');
         
-        if (killAction) {
-            morningMessage += `Tragedy has struck. The werewolf eliminated ${killAction.target}!`;
+        // Use the eliminatedPlayer string directly from the server!
+        if (data.eliminatedPlayer) {
+            morningMessage += `Tragedy has struck. The werewolf eliminated ${data.eliminatedPlayer}!`;
         } else {
             morningMessage += `It is a miracle. Nobody was killed last night.`;
         }
@@ -425,11 +427,11 @@ export function setupGameLogic(socket, gameState) {
         }
         
         if (data.eliminatedPlayer) {
-            const playersList = document.getElementById("players-list");
-            if (playersList) {
-                const playerItems = playersList.querySelectorAll('li');
+            const gamePlayersList = document.getElementById("game-players-list");
+            if (gamePlayersList) {
+                const playerItems = gamePlayersList.querySelectorAll('li');
                 playerItems.forEach(item => {
-                    if (item.textContent === data.eliminatedPlayer) {
+                    if (item.textContent.trim() === data.eliminatedPlayer) {
                         item.remove();
                     }
                 });
@@ -460,6 +462,7 @@ export function setupGameLogic(socket, gameState) {
     /* ========================================================================== */
     
     socket.on('game-over', (data) => {
+        
         showPage('gameoverpage');
         
         const title = document.getElementById('game-over-title');
@@ -476,12 +479,40 @@ export function setupGameLogic(socket, gameState) {
         }
     });
 
-    const backToLobbyBtn = document.getElementById('backToLobbyBtn');
+   const backToLobbyBtn = document.getElementById('backToLobbyBtn');
     if (backToLobbyBtn) {
         backToLobbyBtn.onclick = () => {
-            window.location.reload(); 
+            // Instead of reloading the page, tell the server to restart the room!
+            socket.emit('play-again', gameState.currentRoom); 
         };
     }
+
+    // When the server confirms the reset, clean up the UI
+    socket.on('room-reset', () => {
+        // 1. Go back to the lobby screen
+        showPage('lobby');
+
+        // 2. Clear both chat boxes
+        const mainChatBox = document.querySelector(".chat-box");
+        if (mainChatBox) mainChatBox.innerHTML = "";
+        
+        const gameChatBox = document.getElementById("gameChatBox");
+        if (gameChatBox) gameChatBox.innerHTML = "";
+
+        // 3. Revive the player locally
+        gameState.isEliminated = false;
+        gameState.hasVoted = false;
+        if (gameState.eliminatedPlayers) gameState.eliminatedPlayers.clear();
+
+        // 4. Re-enable the chat inputs if they died last game
+        if(gameChatInput) gameChatInput.disabled = false;
+        if(gameSendBtn) gameSendBtn.disabled = false;
+        
+        const chatInputContainer = document.getElementById('game-chat');
+        if(chatInputContainer) chatInputContainer.style.display = ''; // Restores default CSS
+        
+        if(openVoteMenuBtn) openVoteMenuBtn.classList.remove('hidden');
+    });
 
     /* ========================================================================== */
     /* HELPER FUNCTIONS                                                           */
