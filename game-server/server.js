@@ -2,6 +2,7 @@
 console.log("server.js started");
 
 const crypto = require("crypto").webcrypto;
+const { randomBytes } = require("crypto");
 const dbFns = require("./databaseFunction");
 const io = require("socket.io")(3000, {
   cors: {
@@ -123,11 +124,11 @@ function startNightPhase(roomCode) {
   if (!room) return;
 
   createRuntimeRoom(roomCode);
-  runtimeRooms[roomCode].actionQueue = [];
 
   dbFns.updateRoomPhase(roomCode, "night");
   dbFns.clearNightActions(roomCode);
 
+  // Tell EVERYONE the night has started (Villagers will just see "Waiting for sunrise...")
   io.to(roomCode).emit("night-phase-started", {
     message: "Night falls on Olympus...",
   });
@@ -146,11 +147,11 @@ function startNightPhase(roomCode) {
   const allNames     = alivePlayers.map((p) => p.name);
   const nonWolfNames = alivePlayers.filter((p) => p.role !== "Wolf").map((p) => p.name);
 
-  // Queue sequential night actions; they’ll be collected and resolved together.
+  // --- SEND ACTIONS TO EVERYONE AT THE SAME TIME ---
+
   if (seer) {
-    runtimeRooms[roomCode].actionQueue.push({
+    io.to(seer.id).emit("night-action-required", {
       type: "seer-inspect",
-      player: seer,
       targets: allNames.filter((n) => n !== seer.name),
       message: "Choose a player to inspect...",
       duration: 20,
@@ -158,9 +159,8 @@ function startNightPhase(roomCode) {
   }
 
   if (healer) {
-    runtimeRooms[roomCode].actionQueue.push({
+    io.to(healer.id).emit("night-action-required", {
       type: "healer-save",
-      player: healer,
       targets: allNames, // allow self-save
       message: "Choose a player to save...",
       duration: 20,
@@ -168,52 +168,32 @@ function startNightPhase(roomCode) {
   }
 
   if (werewolf) {
-    runtimeRooms[roomCode].actionQueue.push({
+    io.to(werewolf.id).emit("night-action-required", {
       type: "werewolf-kill",
-      player: werewolf,
       targets: nonWolfNames,
       message: "Choose a player to eliminate tonight...",
       duration: 20,
     });
   }
 
-  // Little Girl receives brief info: list of wolves (power can be tuned)
   if (littleG) {
-    const wolves = werewolf ? [werewolf.name] : [];
-    io.to(littleG.id).emit("little-girl-info", { wolves, duration: 6 });
+    io.to(littleG.id).emit("night-action-required", {
+      type: "little-girl-peek",
+      targets: ["Click to Peek at the Wolf"],
+      message: "WARNING: You have a 70% chance to be seen!",
+      duration: 10 + Math.floor(Math.random() * 10), // Changed to random number between 10s and 19s so her timer perfectly syncs with everyone else
+    });
   }
 
-  processNextNightAction(roomCode);
-}
-
-function processNextNightAction(roomCode) {
-  const room = dbFns.getRoom(roomCode);
-  if (!room) return;
-
-  createRuntimeRoom(roomCode);
-
-  const next = runtimeRooms[roomCode].actionQueue.shift();
-  if (!next) {
-    // Small pause before reveal for UX
-    setTimeout(() => {
-      revealNightActions(roomCode);
-    }, 1500);
-    return;
-  }
-
-  io.to(next.player.id).emit("night-action-required", {
-    type: next.type, // 'seer-inspect' | 'healer-save' | 'werewolf-kill'
-    targets: next.targets,
-    message: next.message,
-    duration: next.duration,
-  });
-
-  // Fallback timeout if the player doesn't respond in time
+  // --- START THE ONE GLOBAL TIMER ---
+  // When 20 seconds are up, the server automatically resolves everything!
   runtimeRooms[roomCode].actionTimeout = setTimeout(() => {
     runtimeRooms[roomCode].actionTimeout = null;
-    processNextNightAction(roomCode);
-  }, (next.duration || 20) * 1000);
+    revealNightActions(roomCode);
+  }, 20000); 
 }
+
+
 
 function revealNightActions(roomCode) {
   const room = dbFns.getRoom(roomCode);
@@ -548,6 +528,7 @@ io.on("connection", (socket) => {
   });
 
   /* ---------------------- Night Action ---------------------- */
+ /* ---------------------- Night Action ---------------------- */
   socket.on("submit-night-action", (roomCode, actionData) => {
     const room = dbFns.getRoom(roomCode);
     if (!room || room.game_phase !== "night") return;
@@ -560,23 +541,33 @@ io.on("connection", (socket) => {
       socket.id,
       player.display_name,
       player.role,
-      actionData.type,      // 'seer-inspect' | 'healer-save' | 'werewolf-kill'
+      actionData.type,
       actionData.target || null
     );
 
-    // Seer receives private, instant feedback
+    // Seer logic: Instant feedback
     if (actionData.type === "seer-inspect" && player.role === "Seer" && actionData.target) {
       const target = getAlivePlayers(roomCode).find((p) => p.display_name === actionData.target);
       const targetRole = target ? target.role : "Unknown";
       io.to(socket.id).emit("seer-result", { target: actionData.target, role: targetRole });
     }
 
-    if (runtimeRooms[roomCode]?.actionTimeout) {
-      clearTimeout(runtimeRooms[roomCode].actionTimeout);
-      runtimeRooms[roomCode].actionTimeout = null;
+    // Little Girl logic: Reveal wolf, calculate 70% risk
+    if (actionData.type === "little-girl-peek" && player.role === "Little Girl") {
+      const wolves = getAlivePlayers(roomCode).filter(p => p.role === "Wolf").map(p => p.display_name);
+      io.to(socket.id).emit("little-girl-result", { wolves });
+
+      // 70% chance to get caught!
+      if (Math.random() < 0.70) {
+        const werewolf = getAlivePlayers(roomCode).find(p => p.role === "Wolf");
+        if (werewolf) {
+          io.to(werewolf.socket_id).emit("little-girl-caught", { littleGirlName: player.display_name });
+        }
+      }
     }
 
-    processNextNightAction(roomCode);
+    // DO NOT add processNextNightAction() here anymore!
+    // We want the timer to completely run out so the player can read the result on their screen.
   });
 
   /* ---------------------- Play Again / Reset ---------------------- */
@@ -594,4 +585,5 @@ io.on("connection", (socket) => {
     const players = dbFns.getPlayers(roomCode).map((p) => p.display_name);
     io.to(roomCode).emit("update-players", players);
   });
-});
+
+})

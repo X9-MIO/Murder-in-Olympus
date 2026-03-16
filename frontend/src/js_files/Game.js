@@ -27,12 +27,24 @@ export function setupGameLogic(socket, gameState) {
         const cardRoleText = document.getElementById("card-role-text");
         if (cardRoleText) {
             cardRoleText.textContent = gameState.myRole;
-            cardRoleText.style.color = gameState.myRole === "Wolf" ? "#ef4444" : "var(--accent)"; 
+            
+            // Assign unique colors to the new roles
+            if (role === "Wolf") cardRoleText.style.color = "#ef4444"; // Red
+            else if (role === "Seer") cardRoleText.style.color = "#a855f7"; // Purple
+            else if (role === "Healer") cardRoleText.style.color = "#22c55e"; // Green
+            else if (role === "Little Girl") cardRoleText.style.color = "#ec4899"; // Pink
+            else cardRoleText.style.color = "var(--accent)"; // Default Villager
         }
 
         const roleImage = document.getElementById("role-image");
         const messagingRoleImage = document.getElementById("messaging-role-image");
-        const imagePath = gameState.myRole === "Wolf" ? "/public/wolf.png" : "/public/villager.png";
+        
+        // Map the new roles to their specific images
+        let imagePath = "/public/villager.png"; 
+        if (role === "Wolf") imagePath = "/public/wolf.png";
+        else if (role === "Seer") imagePath = "/public/seer.png"; 
+        else if (role === "Healer") imagePath = "/public/healer.png";
+        else if (role === "Little Girl") imagePath = "/public/little-girl.png";
 
         if (roleImage) roleImage.src = imagePath; 
         if (messagingRoleImage) messagingRoleImage.src = imagePath;
@@ -74,6 +86,42 @@ export function setupGameLogic(socket, gameState) {
 
         }, 6000); 
     });
+
+
+    /* ========================================================================== */
+    /* PRIVATE ROLE FEEDBACK LOGIC                                                */
+    /* ========================================================================== */
+
+    // Handle Seer's inspection result
+    socket.on('seer-result', (data) => {
+        // The easiest way to show them the result is to push a private system message into their chat
+        appendToGameChat(`[VISION]: You inspected ${data.target}. Their true role is ${data.role}!`);
+        
+        // Optionally, you can also display this on the screen temporarily
+        const waitingText = document.getElementById('night-waiting-text');
+        if (waitingText) {night-action-required
+
+            waitingText.textContent = `Vision received: ${data.target} is a ${data.role}!`;
+            waitingText.classList.remove('hidden');
+        }
+    });
+
+    // Handle Little Girl's passive peek
+    socket.on('little-girl-caught', (data) => {
+        // Send a private, scary system message to the Wolf
+        appendToGameChat(`[DANGER]: You heard a twig snap in the dark... You saw ${data.littleGirlName} peeking at you! They are the Little Girl!`);
+    });
+
+
+
+
+
+
+
+
+
+
+
 
     /* ========================================================================== */
     /* 3. IN-GAME CHAT LOGIC                                                      */
@@ -335,8 +383,9 @@ export function setupGameLogic(socket, gameState) {
     });
     
     socket.on('night-action-required', (data) => {
-        const targetSelect = document.getElementById('nightTargetSelect');
-        const submitBtn = document.getElementById('submitNightActionBtn');
+        const nightMsg = document.getElementById('night-message-text');
+        if (nightMsg) nightMsg.textContent = data.message;
+        
         const actionContainer = document.getElementById('night-action-container');
         const waitingText = document.getElementById('night-waiting-text');
         const nightTimer = document.getElementById('night-timer');
@@ -345,21 +394,45 @@ export function setupGameLogic(socket, gameState) {
         if(waitingText) waitingText.classList.add('hidden');
         if(nightTimer) nightTimer.classList.remove('hidden');
         
-        if (targetSelect) {
-            targetSelect.innerHTML = '<option disabled selected>Choose a target...</option>';
-            data.targets.forEach(target => {
-                const option = document.createElement('option');
-                option.value = target;
-                option.textContent = target;
-                targetSelect.appendChild(option);
-            });
-        }
+        // 1. Clear whatever was in the container before
+        actionContainer.innerHTML = '';
         
+        // 2. Create a clickable button for every target
+        data.targets.forEach(targetName => {
+            const btn = document.createElement('button');
+            btn.className = 'night-target-btn';
+            btn.textContent = targetName;
+            
+            // Add some base styling so they look like big clickable blocks
+            btn.style.cssText = "display: block; width: 100%; margin: 10px 0; padding: 15px; font-size: 1.2rem; background: var(--bg); border: 2px solid var(--accent); color: var(--text); border-radius: 8px; cursor: pointer; transition: 0.3s;";
+            
+            btn.onclick = () => {
+                // Disable ALL buttons so they can't click twice
+                document.querySelectorAll('.night-target-btn').forEach(b => b.disabled = true);
+                
+                // Show a loading state briefly
+                btn.textContent = "Revealing...";
+                
+                socket.emit('submit-night-action', gameState.currentRoom, {
+                    type: data.type,
+                    target: targetName
+                });
+                
+                // If it's the Wolf or Healer, just show "Submitted"
+                if (data.type !== 'seer-inspect' && data.type !== 'little-girl-peek') {
+                    btn.textContent = "Action Submitted!";
+                    btn.style.background = "var(--accent)";
+                    btn.style.color = "#fff";
+                }
+            };
+            actionContainer.appendChild(btn);
+        });
+        
+        // 3. Handle the Timer
         let timeLeft = data.duration;
         if (nightTimer) nightTimer.textContent = `${timeLeft}s`;
         
         if (nightCountdownInterval) clearInterval(nightCountdownInterval);
-        
         nightCountdownInterval = setInterval(() => {
             timeLeft--;
             if (nightTimer) nightTimer.textContent = `${timeLeft}s`;
@@ -369,33 +442,69 @@ export function setupGameLogic(socket, gameState) {
                 if(actionContainer) actionContainer.classList.add('hidden');
                 if(nightTimer) nightTimer.classList.add('hidden');
                 if(waitingText) {
-                    waitingText.textContent = "Time's up! You missed your chance to attack.";
+                    waitingText.textContent = "Time's up! Waiting for sunrise...";
                     waitingText.classList.remove('hidden');
                 }
             }
         }, 1000);
-        
-        if (submitBtn) {
-            submitBtn.onclick = () => {
-                const selectedTarget = targetSelect.value;
-                if (selectedTarget && selectedTarget !== 'Choose a target...') {
-                    socket.emit('submit-night-action', gameState.currentRoom, {
-                        type: data.type,
-                        target: selectedTarget
-                    });
-                    
-                    clearInterval(nightCountdownInterval);
-                    
-                    if(actionContainer) actionContainer.classList.add('hidden');
-                    if(nightTimer) nightTimer.classList.add('hidden');
-                    if(waitingText) {
-                        waitingText.textContent = "Action submitted! Waiting for sunrise...";
-                        waitingText.classList.remove('hidden');
-                    }
-                }
-            };
-        }
     });
+
+
+
+
+    // Make the Seer's button flip to show the role
+    socket.on('seer-result', (data) => {
+        const buttons = document.querySelectorAll('.night-target-btn');
+        buttons.forEach(btn => {
+            if (btn.textContent === "Revealing...") {
+                btn.textContent = `${data.target} is the ${data.role}!`;
+                // Turn red for wolf, purple for anything else
+                btn.style.background = data.role === 'Wolf' ? '#ef4444' : '#a855f7';
+                btn.style.color = '#fff';
+            }
+        });
+        appendToGameChat(`[VISION]: You inspected ${data.target}. Their true role is ${data.role}!`);
+    });
+
+    // Make the Little Girl's button flip to show the Wolf
+    socket.on('little-girl-result', (data) => {
+        const buttons = document.querySelectorAll('.night-target-btn');
+        const wolvesList = data.wolves.length > 0 ? data.wolves.join(", ") : "Nobody";
+        buttons.forEach(btn => {
+            if (btn.textContent === "Revealing...") {
+                btn.textContent = `The Wolf is: ${wolvesList}!`;
+                btn.style.background = '#ef4444'; // Red for wolf
+                btn.style.color = '#fff';
+            }
+        });
+        appendToGameChat(`[PEEK]: You saw the wolves: ${wolvesList}`);
+    });
+
+   
+   // If the Little Girl gets caught, notify the Wolf AND highlight her button!
+    socket.on('little-girl-caught', (data) => {
+        // 1. Send the scary chat message
+        appendToGameChat(`[DANGER]: You heard a twig snap... ${data.littleGirlName} is the Little Girl and just saw you!`);
+
+        // 2. Find the Little Girl's button on the Wolf's screen and change it
+        const buttons = document.querySelectorAll('.night-target-btn');
+        buttons.forEach(btn => {
+            // Check if this button has the Little Girl's name
+            if (btn.textContent === data.littleGirlName) {
+                btn.textContent = `${data.littleGirlName} (Caught Peeking!)`;
+                
+                // Turn her button bright pink so the Wolf immediately notices!
+                btn.style.background = '#ec4899'; 
+                btn.style.color = '#fff';
+                btn.style.borderColor = '#fff';
+                btn.style.fontWeight = 'bold';
+            }
+        });
+    });
+
+
+
+
     
     socket.on('night-actions-revealed', (data) => {
         showPage('daypage'); 
