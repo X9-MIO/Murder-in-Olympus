@@ -230,7 +230,12 @@
 
 <!-- day page  --> 
 
-<div class="page day-page hidden" id="daypage">
+<div class="page day-page hidden scene" id="daypage">
+    <div class="backgroundDay"></div>
+    <div class="skyDay"></div>
+    <div class="sunDay"></div>
+    <div class="moonDay"></div>
+
     <div class="phase-content day-content">
         <h1 class="phase-title">THE DAY PHASE</h1>
         <p id="day-message-text" class="phase-message"></p>
@@ -242,21 +247,26 @@
 
 
 <!-- night page  --> 
+<div class="page night-page hidden scene" id="nightpage">
+    <div class="backgroundNight"></div>
+    <div class="skyNight"></div>
+    <div class="sunNight"></div>
+    <div class="moonNight"></div>
 
-<div class="page night-page hidden" id="nightpage">
+
     <div class="phase-content night-content">
         <h1 class="phase-title">THE NIGHT PHASE</h1>
         <p id="night-message-text" class="phase-message"></p>
-        
+
         <div id="night-timer" class="phase-timer hidden">30s</div>
-        
+
         <div id="night-action-container" class="hidden">
             <select id="nightTargetSelect" class="target-select">
                 <option disabled selected>Choose a target...</option>
             </select>
             <button id="submitNightActionBtn" class="primary">Submit Action</button>
         </div>
-        
+
         <div id="night-waiting-text">Waiting for the night to end...</div>
     </div>
 </div>
