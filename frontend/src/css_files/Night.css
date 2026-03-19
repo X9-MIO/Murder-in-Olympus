@@ -1,9 +1,92 @@
-.night-page {
-    background: #000000 !important;
+.night-page { 
     display: flex;
     justify-content: center;
     align-items: center;
     color: #ffffff; /* White text on black background */
+}
+
+.backgroundNight, .skyNight { 
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    animation: DayToNight 2.5s forwards;
+}
+
+.sunNight, .moonNight {
+    position: absolute;
+    top: 16%;
+    left: 46%;
+    width: 10%;
+    height: 10%;
+    background-position: center;
+    background-size: cover;
+    transform-origin: 5vw 35vh;
+}
+
+
+.skyNight {
+    background-image: url("/public/sky.png");
+    z-index: -3;
+}
+
+.backgroundNight {
+    background-image: url("/public/backdrop4.png");
+    z-index: -1;
+}
+
+.sunNight {
+    background-image: url("/public/sun.png");
+    z-index: -2;
+    filter: brightness(100%) saturate(90%) contrast(140%); 
+    animation: SunNight 2.5s ease-in-out forwards;
+}
+
+.moonNight {
+    background-image: url("/public/moon.png");
+    transform: rotate(240deg);
+    z-index: -2; 
+    animation: MoonNight 2.5s ease-in-out forwards;
+}
+
+@keyframes SunNight {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(120deg);
+    }
+}
+
+@keyframes MoonNight {
+    from {
+        transform: rotate(240deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes DayToNight {
+    0% {
+        filter: brightness(80%) saturate(90%) contrast(100%);
+        
+    }
+
+    /*50% {
+        filter: brightness(50%) saturate(60%) contrast(100%);
+    }*/
+
+
+    100% {
+        filter: brightness(20%) saturate(10%) contrast(120%);
+    }
 }
 
 .night-content {
@@ -11,7 +94,31 @@
     text-align: center;
     max-width: 600px;
     width: 90%;
-    /* No borders, no background colors! */
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 16px;
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+}
+
+.phase-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #d4af37;
+    margin: 0 0 20px 0;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.6),
+                 0 0 40px rgba(139, 69, 19, 0.5),
+                 2px 2px 4px rgba(0, 0, 0, 0.9);
+    letter-spacing: 3px;
+}
+
+.phase-message {
+    font-size: 1.4rem;
+    color: #e8dcc4;
+    margin: 0;
+    line-height: 1.6;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.8),
+                 2px 2px 4px rgba(0, 0, 0, 0.9);
+    font-weight: 600;
 }
 
 .target-select {
@@ -31,4 +138,3 @@
     font-weight: bold;
     text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
-

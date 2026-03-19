@@ -2,11 +2,22 @@ const db = require("./db");
 console.log("databaseFunctions.js loaded");
 
 // Room functions
-function createRoom(roomCode, numberOfPlayers, creatorSocketId) {
+function createRoom(roomCode, numberOfPlayers, creatorSocketId, roleConfig = null) {
+  const configJson = roleConfig ? JSON.stringify(roleConfig) : null;
   db.prepare(`
-    INSERT INTO rooms (room_code, number_of_players, creator_socket_id, game_phase)
-    VALUES (?, ?, ?, 'lobby')
-  `).run(roomCode, numberOfPlayers, creatorSocketId);
+    INSERT INTO rooms (room_code, number_of_players, creator_socket_id, game_phase, role_config)
+    VALUES (?, ?, ?, 'lobby', ?)
+  `).run(roomCode, numberOfPlayers, creatorSocketId, configJson);
+}
+
+function getRoleConfig(roomCode) {
+  const room = db.prepare(`SELECT role_config FROM rooms WHERE room_code = ?`).get(roomCode);
+  if (!room || !room.role_config) return null;
+  try {
+    return JSON.parse(room.role_config);
+  } catch (e) {
+    return null;
+  }
 }
 
 function getRoom(roomCode) {
@@ -197,6 +208,7 @@ function clearNightActions(roomCode, roundNumber = 1) {
 module.exports = {
   createRoom,
   getRoom,
+  getRoleConfig,
   deleteRoom,
   updateRoomPhase,
   setWinner,

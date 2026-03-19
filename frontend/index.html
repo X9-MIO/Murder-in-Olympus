@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Murder in Olympus</title>
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Cinzel:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./src/css_files/Home.css">
     <link rel="stylesheet" href="./src/css_files/CreateRoom.css">
     <link rel="stylesheet" href="./src/css_files/GameMessaging.css">
     <link rel="stylesheet" href="./src/css_files/Lobby.css">
@@ -17,9 +18,24 @@
 </head>
 <body>
 
+<div class="page home-page" id="homepage">
+    <div class="home-title-section">
+        <h1 class="home-main-title">Murder in Olympus</h1>
+    </div>
+    <div class="card">
+        <p class="subtitle">A social deduction game</p>
+        <div class="home-actions">
+            <button class="primary" id="home-join-btn">Join Game</button>
+            <button class="primary" id="home-create-btn">Create Existing Game</button>
+            <button class="primary" id="home-help-btn">Help</button>
+        </div>
+    </div>
+</div>
+
+
     <!-- join  Lobby page -->
 
-<div class="page join-page" id="joinpage">
+<div class="page join-page hidden" id="joinpage">
     <div class="card">
         <h1>Join Lobby</h1>
         <p class="subtitle">Enter your name and room code</p>
@@ -113,6 +129,28 @@
             </select>
         </div>
 
+        <div class="role-configuration">
+            <label class="role-config-title">Role Distribution</label>
+            <div class="role-inputs">
+                <div class="role-input-group">
+                    <label for="role-wolf">🐺 Wolves</label>
+                    <input type="number" id="role-wolf" min="1" max="3" value="1">
+                </div>
+                <div class="role-input-group">
+                    <label for="role-seer">🔮 Seers</label>
+                    <input type="number" id="role-seer" min="0" max="2" value="1">
+                </div>
+                <div class="role-input-group">
+                    <label for="role-healer">💚 Healers</label>
+                    <input type="number" id="role-healer" min="0" max="2" value="1">
+                </div>
+                <div class="role-input-group">
+                    <label for="role-little-girl">👧 Little Girls</label>
+                    <input type="number" id="role-little-girl" min="0" max="1" value="1">
+                </div>
+            </div>
+        </div>
+
         <button class="primary" id="createroombtn">Create Room</button>
 
         <div class="alt-action">
@@ -125,6 +163,19 @@
 </div>
 
 <!-- create room page -->
+
+<div class="page help-page hidden" id="helppage">
+    <div class="card">
+        <h1>How to Play</h1>
+        <p class="subtitle">Quick start guide</p>
+        <ul class="help-list">
+            <li>Join a room or create one to start playing.</li>
+            <li>Use chat to discuss and vote on who to eliminate.</li>
+            <li>When the game starts, your role will be revealed to you.</li>
+        </ul>
+        <button class="primary" id="help-back-btn">Back</button>
+    </div>
+</div>
 
 
 
@@ -230,7 +281,12 @@
 
 <!-- day page  --> 
 
-<div class="page day-page hidden" id="daypage">
+<div class="page day-page hidden scene" id="daypage">
+    <div class="backgroundDay"></div>
+    <div class="skyDay"></div>
+    <div class="sunDay"></div>
+    <div class="moonDay"></div>
+
     <div class="phase-content day-content">
         <h1 class="phase-title">THE DAY PHASE</h1>
         <p id="day-message-text" class="phase-message"></p>
@@ -242,21 +298,26 @@
 
 
 <!-- night page  --> 
+<div class="page night-page hidden scene" id="nightpage">
+    <div class="backgroundNight"></div>
+    <div class="skyNight"></div>
+    <div class="sunNight"></div>
+    <div class="moonNight"></div>
 
-<div class="page night-page hidden" id="nightpage">
+
     <div class="phase-content night-content">
         <h1 class="phase-title">THE NIGHT PHASE</h1>
         <p id="night-message-text" class="phase-message"></p>
-        
+
         <div id="night-timer" class="phase-timer hidden">30s</div>
-        
+
         <div id="night-action-container" class="hidden">
             <select id="nightTargetSelect" class="target-select">
                 <option disabled selected>Choose a target...</option>
             </select>
             <button id="submitNightActionBtn" class="primary">Submit Action</button>
         </div>
-        
+
         <div id="night-waiting-text">Waiting for the night to end...</div>
     </div>
 </div>

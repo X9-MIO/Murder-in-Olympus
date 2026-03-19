@@ -1,18 +1,21 @@
+/* ============================= */ 
+/* Reset & Theme (main.css) - Greek God & Werewolf Theme */
 /* ============================= */
-/* Reset & Theme (main.css) */
-/* ============================= */
+
 * {
     box-sizing: border-box;
 }
 
 :root {
-    --bg: #0f172a;
-    --panel: #020617;
-    --card: #020617;
-    --border: #1e293b;
-    --text: #e5e7eb;
-    --muted: #94a3b8;
-    --accent: #3b82f6;
+    --bg: #1a0a2e;
+    --panel: #0f051a;
+    --card: #16082d;
+    --border: #3d1f4d;
+    --text: #e8dcc4;
+    --muted: #a89878;
+    --accent: #d4af37;
+    --accent-secondary: #8b4513;
+    --danger: #8b0000;
 }
 
 body {
@@ -20,13 +23,60 @@ body {
     font-family: system-ui, -apple-system, sans-serif;
     background: var(--bg);
     color: var(--text);
-    overflow: hidden; 
+    overflow: hidden;
 }
 
 .page {
     position: absolute;
     inset: 0;
     height: 100vh;
+}
+
+.home-page,
+.help-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-page .card,
+.help-page .card {
+    background: var(--card);
+    padding: 32px;
+    width: 360px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.home-page .card h1,
+.help-page .card h1 {
+    margin: 0 0 6px;
+}
+
+.home-page .subtitle,
+.help-page .subtitle {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.home-actions button {
+    margin-bottom: 10px;
+}
+
+.help-list {
+    padding-left: 1.25rem;
+    margin-bottom: 18px;
+    color: var(--muted);
+}
+
+.scene {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    transform-origin: top left;
 }
 
 .hidden {
@@ -46,15 +96,15 @@ button {
     transition: all 0.2s ease;
 }
 
-button.primary {
-    background: var(--accent);
-    color: white;
-}
+    button.primary {
+        background: var(--accent);
+        color: white;
+    }
 
-button:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-}
+    button:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
 
 .game-over-page {
     background: #0f172a !important; /* Dark blue background */

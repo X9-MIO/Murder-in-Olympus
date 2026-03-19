@@ -1,0 +1,240 @@
+/* ============================= */
+/* Home Page (Home.css) - Greek God & Werewolf Theme */
+/* ============================= */
+
+.home-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a0a2e 0%, #2d1444 50%, #1a0a2e 100%);
+    position: relative;
+    overflow: hidden;
+    gap: 60px;
+    padding: 80px 20px;
+}
+
+.home-title-section {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeInScale 0.6s ease-out;
+}
+
+.home-main-title {
+    margin: 0;
+    font-size: 4.5rem;
+    font-weight: 900;
+    font-family: 'Cinzel', serif;
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #b8860b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+    letter-spacing: 2px;
+}
+
+/* Animated background effect - mystical glow */
+.home-page::before {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 69, 19, 0.08) 0%, transparent 50%);
+    animation: shift 15s ease-in-out infinite;
+    top: -50%;
+    left: -50%;
+}
+
+@keyframes shift {
+    0%, 100% {
+        transform: translate(0, 0);
+    }
+    50% {
+        transform: translate(50px, 50px);
+    }
+}
+
+.home-page .card {
+    background: rgba(22, 8, 45, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 20px;
+    border: 2px solid #3d1f4d;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 
+                inset 0 1px 0 rgba(212, 175, 55, 0.1),
+                0 0 20px rgba(212, 175, 55, 0.1);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeInScale 0.6s ease-out;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.home-page .subtitle {
+    margin: 0 0 40px;
+    color: #a89878;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.home-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.home-actions button {
+    padding: 14px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.home-actions button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: left 0.3s ease;
+}
+
+.home-actions button:hover::before {
+    left: 100%;
+}
+
+.home-actions button.primary {
+    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+    color: #1a0a2e;
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+    transform: translateY(0);
+    font-weight: 700;
+}
+
+.home-actions button.primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.5);
+}
+
+.home-actions button.primary:active {
+    transform: translateY(-1px);
+}
+
+/* Help Page Styling */
+.help-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a0a2e 0%, #2d1444 50%, #1a0a2e 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.help-page::before {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 20% 50%, rgba(139, 69, 19, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.08) 0%, transparent 50%);
+    animation: shift 15s ease-in-out infinite;
+    top: -50%;
+    left: -50%;
+}
+
+.help-page .card {
+    background: rgba(22, 8, 45, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 20px;
+    border: 2px solid #3d1f4d;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8),
+                inset 0 1px 0 rgba(212, 175, 55, 0.1),
+                0 0 20px rgba(212, 175, 55, 0.1);
+    position: relative;
+    z-index: 1;
+    animation: fadeInScale 0.6s ease-out;
+}
+
+.help-page .card h1 {
+    margin: 0 0 8px;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.help-page .subtitle {
+    margin: 0 0 24px;
+    color: #a89878;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.help-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 28px;
+    text-align: left;
+}
+
+.help-list li {
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    background: rgba(61, 31, 77, 0.3);
+    border-left: 3px solid #d4af37;
+    border-radius: 8px;
+    color: #e8dcc4;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+}
+
+.help-list li:hover {
+    background: rgba(61, 31, 77, 0.5);
+    border-left-color: #ffd700;
+    transform: translateX(4px);
+}
+
+.help-page #help-back-btn {
+    width: 100%;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+    color: #1a0a2e;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.help-page #help-back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
+}

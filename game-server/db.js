@@ -26,7 +26,8 @@ db.prepare(`
     number_of_players INTEGER NOT NULL,
     creator_socket_id TEXT NOT NULL,
     game_phase TEXT NOT NULL DEFAULT 'lobby',
-    winner TEXT DEFAULT NULL
+    winner TEXT DEFAULT NULL,
+    role_config TEXT DEFAULT NULL
   )
 `).run();
 
