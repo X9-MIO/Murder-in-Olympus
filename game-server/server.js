@@ -99,6 +99,7 @@ function buildRoleList(playerCount) {
   const roles = ["Wolf"];
   if (playerCount >= 5) roles.push("Seer", "Healer");
   if (playerCount >= 6) roles.push("Little Girl");
+  if (playerCount >= 7) roles.push("Artemis");
   while (roles.length < playerCount) roles.push("Villager");
   return shuffle(roles);
 }
@@ -139,10 +140,11 @@ function startNightPhase(roomCode) {
     role: p.role,
   }));
 
-  const werewolf = alivePlayers.find((p) => p.role === "Wolf");
+  const wolves = alivePlayers.filter((p) => p.role === "Wolf");
   const healer   = alivePlayers.find((p) => p.role === "Healer");
   const seer     = alivePlayers.find((p) => p.role === "Seer");
   const littleG  = alivePlayers.find((p) => p.role === "Little Girl");
+  const Artemis   = alivePlayers.find((p) => p.role === "Artemis");
 
   const allNames     = alivePlayers.map((p) => p.name);
   const nonWolfNames = alivePlayers.filter((p) => p.role !== "Wolf").map((p) => p.name);
@@ -167,14 +169,14 @@ function startNightPhase(roomCode) {
     });
   }
 
-  if (werewolf) {
-    io.to(werewolf.id).emit("night-action-required", {
+  wolves.forEach(wolf => {
+    io.to(wolf.id).emit("night-action-required", {
       type: "werewolf-kill",
-      targets: nonWolfNames,
+      targets: nonWolfNames, // They can't kill other wolves!
       message: "Choose a player to eliminate tonight...",
       duration: 20,
     });
-  }
+  });
 
   if (littleG) {
     io.to(littleG.id).emit("night-action-required", {
@@ -182,6 +184,16 @@ function startNightPhase(roomCode) {
       targets: ["Click to Peek at the Wolf"],
       message: "WARNING: You have a 70% chance to be seen!",
       duration: 10 + Math.floor(Math.random() * 10), // Changed to random number between 10s and 19s so her timer perfectly syncs with everyone else
+    });
+  }
+
+  if (Artemis) {
+    io.to(Artemis.id).emit("night-action-required", {
+      type: "Artemis-shoot",
+      // Give him the option to not shoot anyone, plus the rest of the players
+      targets: ["Do not shoot", ...allNames.filter((n) => n !== Artemis.name)],
+      message: "Shoot a Wolf! If you shoot an innocent, YOU will die of guilt!",
+      duration: 20,
     });
   }
 
@@ -200,58 +212,99 @@ function revealNightActions(roomCode) {
   if (!room) return;
 
   dbFns.updateRoomPhase(roomCode, "action-reveal");
-
   const actions = dbFns.getNightActions(roomCode);
 
-  // Resolve Wolf kill (supports multiple wolf votes in future)
-  const wolfVotes = actions
-    .filter((a) => a.action_type === "werewolf-kill")
-    .map((a) => a.target_name)
-    .filter(Boolean);
+  let deaths = []; // We use an array now, because multiple people can die!
 
+  // 1. Resolve Wolf kill
+  const wolfVotes = actions.filter((a) => a.action_type === "werewolf-kill").map((a) => a.target_name).filter(Boolean);
   const healerSave = actions.find((a) => a.action_type === "healer-save");
   const savedName  = healerSave ? healerSave.target_name : null;
 
-  let killedName = majorityChoice(wolfVotes);
+  let wolfKill = majorityChoice(wolfVotes);
+  if (wolfKill && savedName && wolfKill === savedName) {
+    wolfKill = null; // Healer saved them!
+  }
+  if (wolfKill) deaths.push(wolfKill);
 
-  // Healer cancels kill if save matches
-  if (killedName && savedName && killedName === savedName) {
-    killedName = null;
+  // 2. Resolve Artemis shot
+  const ArtemisAction = actions.find(a => a.action_type === "Artemis-shoot");
+  if (ArtemisAction && ArtemisAction.target_name && ArtemisAction.target_name !== "Do not shoot") {
+    const alivePlayers = dbFns.getAlivePlayers(roomCode);
+    const target = alivePlayers.find(p => p.display_name === sheriffAction.target_name);
+    const sheriffPlayer = alivePlayers.find(p => p.role === "Artemis");
+
+    if (target && sheriffPlayer) {
+      if (target.role === "Wolf") {
+        deaths.push(target.display_name); // Good shot! The Wolf dies.
+      } else {
+        deaths.push(sheriffPlayer.display_name); // Bad shot! Sheriff dies instead.
+      }
+    }
   }
 
-  if (killedName) {
-    dbFns.eliminatePlayerByName(roomCode, killedName);
+  // Make sure we don't list the same person twice (if Wolf & Sheriff killed the same guy)
+  deaths = [...new Set(deaths)];
+
+  // Actually eliminate them in the database
+  deaths.forEach(name => dbFns.eliminatePlayerByName(roomCode, name));
+
+  if (savedName) {
+    const savedPlayer = dbFns.getAlivePlayers(roomCode).find(p => p.display_name === savedName);
+    if (savedPlayer) {
+        io.to(savedPlayer.socket_id).emit("you-were-saved");
+    }
+  }
+
+  // Build the narrative message
+  let morningMessage = "The sun rises over Olympus. ";
+  if (deaths.length > 0) {
+    morningMessage += `Tragedy has struck! ${deaths.join(" and ")} died in the night.`;
+  } else {
+    morningMessage += "It is a miracle. Nobody was killed last night.";
   }
 
   io.to(roomCode).emit("night-actions-revealed", {
     actions,
-    eliminatedPlayer: killedName || null,
-    message: "The night has passed... Here is what transpired:",
+    eliminatedPlayers: deaths, // Sending an array of names now!
+    message: morningMessage
   });
 
-  // Cleanup for next night
   dbFns.clearNightActions(roomCode);
 
+
+  const aliveAfterNight = dbFns.getAlivePlayers(roomCode);
+  const aliveNonWolves = aliveAfterNight.filter(p => p.role !== "Wolf");
+
+  // If there is at least one non-wolf left, roll a 10% chance
+  if (aliveNonWolves.length > 0 && Math.random() < 0.10) {
+     // Pick a random innocent player
+     const turnedPlayer = aliveNonWolves[Math.floor(Math.random() * aliveNonWolves.length)];
+     
+     // Change their role in the database to a Wolf!
+     dbFns.assignRole(turnedPlayer.socket_id, "Wolf");
+
+     // Secretly message them so they know their role changed!
+     io.to(turnedPlayer.socket_id).emit("you-turned-wolf");
+     console.log(`[INFECTION]: ${turnedPlayer.display_name} was turned into a Wolf!`);
+  }
+  // Check Game Over...
   const winner = checkGameOver(roomCode);
   if (winner) {
     dbFns.setWinner(roomCode, winner);
-    dbFns.updateRoomPhase(roomCode, "game_over");
-
+    dbFns.updateRoomPhase(roomCode, "game_startNightPhaseover");
     setTimeout(() => {
       io.to(roomCode).emit("game-over", {
         winner,
-        message:
-          winner === "Villagers"
-            ? "The Werewolf has been eliminated! The village is safe."
+        message: winner === "Villagers" 
+            ? "The Werewolf has been eliminated! The village is safe." 
             : "The Werewolf has overpowered the village!",
       });
     }, 8000);
     return;
   }
 
-  setTimeout(() => {
-    startDiscussionPhase(roomCode);
-  }, 10000);
+  setTimeout(() => { startDiscussionPhase(roomCode); }, 10000);
 }
 
 function startDiscussionPhase(roomCode) {
@@ -554,20 +607,21 @@ io.on("connection", (socket) => {
 
     // Little Girl logic: Reveal wolf, calculate 70% risk
     if (actionData.type === "little-girl-peek" && player.role === "Little Girl") {
-      const wolves = getAlivePlayers(roomCode).filter(p => p.role === "Wolf").map(p => p.display_name);
-      io.to(socket.id).emit("little-girl-result", { wolves });
+      const currentWolves = getAlivePlayers(roomCode).filter(p => p.role === "Wolf");
+      const wolfNames = currentWolves.map(p => p.display_name);
+      
+      io.to(socket.id).emit("little-girl-result", { wolves: wolfNames });
 
       // 70% chance to get caught!
       if (Math.random() < 0.70) {
-        const werewolf = getAlivePlayers(roomCode).find(p => p.role === "Wolf");
-        if (werewolf) {
-          io.to(werewolf.socket_id).emit("little-girl-caught", { littleGirlName: player.display_name });
-        }
+        // Tell EVERY wolf that the Little Girl is peeking
+        currentWolves.forEach(w => {
+          io.to(w.socket_id).emit("little-girl-caught", { littleGirlName: player.display_name });
+        });
       }
     }
 
-    // DO NOT add processNextNightAction() here anymore!
-    // We want the timer to completely run out so the player can read the result on their screen.
+    
   });
 
   /* ---------------------- Play Again / Reset ---------------------- */
