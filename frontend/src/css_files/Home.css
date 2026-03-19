@@ -1,0 +1,226 @@
+/* ============================= */
+/* Home Page (Home.css) */
+/* ============================= */
+
+.home-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 50%, #0f172a 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated background effect */
+.home-page::before {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+    animation: shift 15s ease-in-out infinite;
+    top: -50%;
+    left: -50%;
+}
+
+@keyframes shift {
+    0%, 100% {
+        transform: translate(0, 0);
+    }
+    50% {
+        transform: translate(50px, 50px);
+    }
+}
+
+.home-page .card {
+    background: rgba(2, 6, 23, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 20px;
+    border: 1px solid rgba(30, 41, 59, 0.5);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeInScale 0.6s ease-out;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.home-page .card h1 {
+    margin: 0 0 8px;
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+    letter-spacing: 1px;
+}
+
+.home-page .subtitle {
+    margin: 0 0 40px;
+    color: #94a3b8;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.home-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.home-actions button {
+    padding: 14px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.home-actions button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: left 0.3s ease;
+}
+
+.home-actions button:hover::before {
+    left: 100%;
+}
+
+.home-actions button.primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+    transform: translateY(0);
+}
+
+.home-actions button.primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(59, 130, 246, 0.6);
+}
+
+.home-actions button.primary:active {
+    transform: translateY(-1px);
+}
+
+/* Help Page Styling */
+.help-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 50%, #0f172a 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.help-page::before {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+    animation: shift 15s ease-in-out infinite;
+    top: -50%;
+    left: -50%;
+}
+
+.help-page .card {
+    background: rgba(2, 6, 23, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 20px;
+    border: 1px solid rgba(30, 41, 59, 0.5);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 1;
+    animation: fadeInScale 0.6s ease-out;
+}
+
+.help-page .card h1 {
+    margin: 0 0 8px;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.help-page .subtitle {
+    margin: 0 0 24px;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.help-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 28px;
+    text-align: left;
+}
+
+.help-list li {
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    background: rgba(30, 41, 59, 0.4);
+    border-left: 3px solid #3b82f6;
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+}
+
+.help-list li:hover {
+    background: rgba(30, 41, 59, 0.6);
+    border-left-color: #8b5cf6;
+    transform: translateX(4px);
+}
+
+.help-page #help-back-btn {
+    width: 100%;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.help-page #help-back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+}

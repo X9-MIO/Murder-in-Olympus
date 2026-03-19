@@ -4,6 +4,22 @@ import { showPage, displayError, hideError } from './ui.js';
 export function setupRoomLogic(socket, gameState) {
   
   // --- Navigation Links ---
+  document.getElementById("home-join-btn").addEventListener('click', () => {
+    showPage("joinpage");
+  });
+
+  document.getElementById("home-create-btn").addEventListener('click', () => {
+    showPage("createroompage");
+  });
+
+  document.getElementById("home-help-btn").addEventListener('click', () => {
+    showPage("helppage");
+  });
+
+  document.getElementById("help-back-btn").addEventListener('click', () => {
+    showPage("homepage");
+  });
+
   document.getElementById("createroomlink").addEventListener('click', (e) => {
     e.preventDefault();
     showPage("createroompage");

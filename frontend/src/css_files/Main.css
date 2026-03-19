@@ -30,6 +30,45 @@ body {
     height: 100vh;
 }
 
+.home-page,
+.help-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-page .card,
+.help-page .card {
+    background: var(--card);
+    padding: 32px;
+    width: 360px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.home-page .card h1,
+.help-page .card h1 {
+    margin: 0 0 6px;
+}
+
+.home-page .subtitle,
+.help-page .subtitle {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.home-actions button {
+    margin-bottom: 10px;
+}
+
+.help-list {
+    padding-left: 1.25rem;
+    margin-bottom: 18px;
+    color: var(--muted);
+}
+
 .scene {
     position: relative;
     width: 100%;

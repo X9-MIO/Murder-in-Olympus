@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Murder in Olympus</title>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./src/css_files/Home.css">
     <link rel="stylesheet" href="./src/css_files/CreateRoom.css">
     <link rel="stylesheet" href="./src/css_files/GameMessaging.css">
     <link rel="stylesheet" href="./src/css_files/Lobby.css">
@@ -17,9 +18,22 @@
 </head>
 <body>
 
+<div class="page home-page" id="homepage">
+    <div class="card">
+        <h1>Murder in Olympus</h1>
+        <p class="subtitle">A social deduction game</p>
+        <div class="home-actions">
+            <button class="primary" id="home-join-btn">Join Game</button>
+            <button class="primary" id="home-create-btn">Create Existing Game</button>
+            <button class="primary" id="home-help-btn">Help</button>
+        </div>
+    </div>
+</div>
+
+
     <!-- join  Lobby page -->
 
-<div class="page join-page" id="joinpage">
+<div class="page join-page hidden" id="joinpage">
     <div class="card">
         <h1>Join Lobby</h1>
         <p class="subtitle">Enter your name and room code</p>
@@ -125,6 +139,19 @@
 </div>
 
 <!-- create room page -->
+
+<div class="page help-page hidden" id="helppage">
+    <div class="card">
+        <h1>How to Play</h1>
+        <p class="subtitle">Quick start guide</p>
+        <ul class="help-list">
+            <li>Join a room or create one to start playing.</li>
+            <li>Use chat to discuss and vote on who to eliminate.</li>
+            <li>When the game starts, your role will be revealed to you.</li>
+        </ul>
+        <button class="primary" id="help-back-btn">Back</button>
+    </div>
+</div>
 
 
 
