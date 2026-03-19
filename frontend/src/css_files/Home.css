@@ -1,24 +1,47 @@
 /* ============================= */
-/* Home Page (Home.css) */
+/* Home Page (Home.css) - Greek God & Werewolf Theme */
 /* ============================= */
 
 .home-page {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 50%, #0f172a 100%);
+    background: linear-gradient(135deg, #1a0a2e 0%, #2d1444 50%, #1a0a2e 100%);
     position: relative;
     overflow: hidden;
+    gap: 60px;
+    padding: 80px 20px;
 }
 
-/* Animated background effect */
+.home-title-section {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeInScale 0.6s ease-out;
+}
+
+.home-main-title {
+    margin: 0;
+    font-size: 4.5rem;
+    font-weight: 900;
+    font-family: 'Cinzel', serif;
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #b8860b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+    letter-spacing: 2px;
+}
+
+/* Animated background effect - mystical glow */
 .home-page::before {
     content: '';
     position: absolute;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+    background: radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 69, 19, 0.08) 0%, transparent 50%);
     animation: shift 15s ease-in-out infinite;
     top: -50%;
     left: -50%;
@@ -34,15 +57,16 @@
 }
 
 .home-page .card {
-    background: rgba(2, 6, 23, 0.7);
+    background: rgba(22, 8, 45, 0.8);
     backdrop-filter: blur(10px);
     padding: 48px 40px;
     width: 100%;
     max-width: 500px;
     border-radius: 20px;
-    border: 1px solid rgba(30, 41, 59, 0.5);
+    border: 2px solid #3d1f4d;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                inset 0 1px 0 rgba(212, 175, 55, 0.1),
+                0 0 20px rgba(212, 175, 55, 0.1);
     text-align: center;
     position: relative;
     z-index: 1;
@@ -60,21 +84,9 @@
     }
 }
 
-.home-page .card h1 {
-    margin: 0 0 8px;
-    font-size: 2.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
-    letter-spacing: 1px;
-}
-
 .home-page .subtitle {
     margin: 0 0 40px;
-    color: #94a3b8;
+    color: #a89878;
     font-size: 1rem;
     font-weight: 500;
     letter-spacing: 0.5px;
@@ -114,15 +126,16 @@
 }
 
 .home-actions button.primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: white;
-    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+    color: #1a0a2e;
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
     transform: translateY(0);
+    font-weight: 700;
 }
 
 .home-actions button.primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(59, 130, 246, 0.6);
+    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.5);
 }
 
 .home-actions button.primary:active {
@@ -134,7 +147,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 50%, #0f172a 100%);
+    background: linear-gradient(135deg, #1a0a2e 0%, #2d1444 50%, #1a0a2e 100%);
     position: relative;
     overflow: hidden;
 }
@@ -144,23 +157,24 @@
     position: absolute;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+    background: radial-gradient(circle at 20% 50%, rgba(139, 69, 19, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.08) 0%, transparent 50%);
     animation: shift 15s ease-in-out infinite;
     top: -50%;
     left: -50%;
 }
 
 .help-page .card {
-    background: rgba(2, 6, 23, 0.7);
+    background: rgba(22, 8, 45, 0.8);
     backdrop-filter: blur(10px);
     padding: 48px 40px;
     width: 100%;
     max-width: 500px;
     border-radius: 20px;
-    border: 1px solid rgba(30, 41, 59, 0.5);
+    border: 2px solid #3d1f4d;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                inset 0 1px 0 rgba(212, 175, 55, 0.1),
+                0 0 20px rgba(212, 175, 55, 0.1);
     position: relative;
     z-index: 1;
     animation: fadeInScale 0.6s ease-out;
@@ -170,7 +184,7 @@
     margin: 0 0 8px;
     font-size: 2rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -178,7 +192,7 @@
 
 .help-page .subtitle {
     margin: 0 0 24px;
-    color: #94a3b8;
+    color: #a89878;
     font-size: 0.9rem;
     font-weight: 500;
 }
@@ -193,34 +207,34 @@
 .help-list li {
     padding: 12px 16px;
     margin-bottom: 10px;
-    background: rgba(30, 41, 59, 0.4);
-    border-left: 3px solid #3b82f6;
+    background: rgba(61, 31, 77, 0.3);
+    border-left: 3px solid #d4af37;
     border-radius: 8px;
-    color: #cbd5e1;
+    color: #e8dcc4;
     font-size: 0.95rem;
     line-height: 1.5;
     transition: all 0.3s ease;
 }
 
 .help-list li:hover {
-    background: rgba(30, 41, 59, 0.6);
-    border-left-color: #8b5cf6;
+    background: rgba(61, 31, 77, 0.5);
+    border-left-color: #ffd700;
     transform: translateX(4px);
 }
 
 .help-page #help-back-btn {
     width: 100%;
     padding: 12px 24px;
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: white;
+    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+    color: #1a0a2e;
     border: none;
     border-radius: 12px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .help-page #help-back-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
 }

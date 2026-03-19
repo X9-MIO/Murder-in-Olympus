@@ -1,5 +1,5 @@
 /* ============================= */ 
-/* Reset & Theme (main.css) */
+/* Reset & Theme (main.css) - Greek God & Werewolf Theme */
 /* ============================= */
 
 * {
@@ -7,13 +7,15 @@
 }
 
 :root {
-    --bg: #0f172a;
-    --panel: #020617;
-    --card: #020617;
-    --border: #1e293b;
-    --text: #e5e7eb;
-    --muted: #94a3b8;
-    --accent: #3b82f6;
+    --bg: #1a0a2e;
+    --panel: #0f051a;
+    --card: #16082d;
+    --border: #3d1f4d;
+    --text: #e8dcc4;
+    --muted: #a89878;
+    --accent: #d4af37;
+    --accent-secondary: #8b4513;
+    --danger: #8b0000;
 }
 
 body {

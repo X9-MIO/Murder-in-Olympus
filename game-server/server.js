@@ -95,7 +95,40 @@ function shuffle(arr) {
 // - Add Seer + Healer if >= 5 players
 // - Add Little Girl if >= 6 players
 // - Fill the rest with Villagers
-function buildRoleList(playerCount) {
+function buildRoleList(playerCount, roleConfig = null) {
+  // If custom config is provided, use it
+  if (roleConfig) {
+    const roles = [];
+    
+    // Add wolves
+    for (let i = 0; i < roleConfig.wolves && roles.length < playerCount; i++) {
+      roles.push("Wolf");
+    }
+    
+    // Add seers
+    for (let i = 0; i < roleConfig.seers && roles.length < playerCount; i++) {
+      roles.push("Seer");
+    }
+    
+    // Add healers
+    for (let i = 0; i < roleConfig.healers && roles.length < playerCount; i++) {
+      roles.push("Healer");
+    }
+    
+    // Add little girls
+    for (let i = 0; i < roleConfig.littleGirls && roles.length < playerCount; i++) {
+      roles.push("Little Girl");
+    }
+    
+    // Fill remaining with villagers
+    while (roles.length < playerCount) {
+      roles.push("Villager");
+    }
+    
+    return shuffle(roles);
+  }
+  
+  // Default behavior if no config
   const roles = ["Wolf"];
   if (playerCount >= 5) roles.push("Seer", "Healer");
   if (playerCount >= 6) roles.push("Little Girl");
@@ -402,10 +435,10 @@ io.on("connection", (socket) => {
   });
 
   /* ---------------------- Create Room ---------------------- */
-  socket.on("create-room", (numberOfPlayer, creatorname) => {
+  socket.on("create-room", (numberOfPlayer, creatorname, roleConfig = null) => {
     const code = createUniqueRoomCode();
 
-    dbFns.createRoom(code, numberOfPlayer, socket.id);
+    dbFns.createRoom(code, numberOfPlayer, socket.id, roleConfig);
     dbFns.addPlayer(code, socket.id, creatorname, 1);
 
     socketToUser[socket.id] = {
@@ -484,7 +517,8 @@ io.on("connection", (socket) => {
     if (!room || room.creator_socket_id !== socket.id) return;
 
     const players = dbFns.getPlayers(roomCode);
-    const roles = buildRoleList(players.length);
+    const roleConfig = dbFns.getRoleConfig(roomCode);
+    const roles = buildRoleList(players.length, roleConfig);
 
     // Assign shuffled roles fairly
     const order = [...players].sort(() => Math.random() - 0.5);

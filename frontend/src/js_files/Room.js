@@ -34,15 +34,30 @@ export function setupRoomLogic(socket, gameState) {
   document.getElementById("createroombtn").addEventListener('click', () => {
     const creatorName = document.getElementById("create-displayname").value.trim();
     const numberOfPlayers = Number(document.getElementById("playercount").value);
-
+    
+    const rolesConfig = {
+      wolves: Number(document.getElementById("role-wolf").value),
+      seers: Number(document.getElementById("role-seer").value),
+      healers: Number(document.getElementById("role-healer").value),
+      littleGirls: Number(document.getElementById("role-little-girl").value)
+    };
+    
+    // Calculate total special roles
+    const totalSpecialRoles = rolesConfig.wolves + rolesConfig.seers + rolesConfig.healers + rolesConfig.littleGirls;
+    
     if(creatorName === "") {
       displayError("create-error", "Fields cannot be empty");
+      return;
+    }
+    
+    if(totalSpecialRoles > numberOfPlayers) {
+      displayError("create-error", "Total roles cannot exceed number of players");
       return;
     }
 
     gameState.currentDisplayName = creatorName;
     
-    socket.emit('create-room', numberOfPlayers, creatorName);
+    socket.emit('create-room', numberOfPlayers, creatorName, rolesConfig);
   });
 
   socket.on('room-created', (newRoomCode) => {
