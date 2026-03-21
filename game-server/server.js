@@ -488,10 +488,22 @@ io.on("connection", (socket) => {
       return;
     }
 
+    const normalizedRequestedName = String(displayName || "").trim().toLowerCase();
+    const nameAlreadyExists = players.some(
+      (p) => String(p.display_name || "").trim().toLowerCase() === normalizedRequestedName
+    );
+
+    if (nameAlreadyExists) {
+      socket.emit("name-taken", roomCode);
+      return;
+    }
+
     socket.join(roomCode);
     dbFns.addPlayer(roomCode, socket.id, displayName, 0);
 
     socketToUser[socket.id] = { roomCode, displayName };
+
+    socket.emit("join-room-success", roomCode);
 
     const updatedPlayers = dbFns.getPlayers(roomCode).map((p) => p.display_name);
     io.to(roomCode).emit("update-players", updatedPlayers);

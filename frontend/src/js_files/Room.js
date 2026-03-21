@@ -30,6 +30,16 @@ export function setupRoomLogic(socket, gameState) {
     showPage("joinpage");
   });
 
+  document.getElementById("join-back-home-btn").addEventListener('click', () => {
+    showPage("homepage");
+    hideError("join-error");
+  });
+
+  document.getElementById("create-back-home-btn").addEventListener('click', () => {
+    showPage("homepage");
+    hideError("create-error");
+  });
+
   // --- Create Room ---
   document.getElementById("createroombtn").addEventListener('click', () => {
     const creatorName = document.getElementById("create-displayname").value.trim();
@@ -85,16 +95,26 @@ export function setupRoomLogic(socket, gameState) {
         document.getElementById("room-code-display").textContent = roomCode;
         gameState.currentRoom = roomCode;
         gameState.currentDisplayName = displayName;
-        
-        showPage("lobby");
+
         socket.emit('join-room', roomCode, displayName);
-        document.getElementById("startgamebtn").classList.add("hidden");
       } else if (status === 'full') {
         displayError("join-error", "This room is currently full.");
       } else {
         displayError("join-error", "Room does not exist.");
       }
     });
+  });
+
+  socket.on('join-room-success', (roomCode) => {
+    document.getElementById("room-code-display").textContent = roomCode;
+    showPage("lobby");
+    document.getElementById("startgamebtn").classList.add("hidden");
+    hideError("join-error");
+  });
+
+  socket.on('name-taken', () => {
+    displayError("join-error", "That display name is already in this room. Choose a different name.");
+    showPage("joinpage");
   });
 
   

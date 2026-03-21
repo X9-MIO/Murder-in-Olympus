@@ -32,6 +32,104 @@ body {
     height: 100vh;
 }
 
+.page:not(.day-page):not(.night-page) {
+    background:
+        radial-gradient(circle at 15% 20%, rgba(124, 87, 200, 0.32) 0%, transparent 38%),
+        radial-gradient(circle at 85% 80%, rgba(92, 52, 168, 0.28) 0%, transparent 34%),
+        linear-gradient(135deg, #130724 0%, #1a0a2e 35%, #2f1450 70%, #120622 100%) !important;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.page:not(.day-page):not(.night-page)::before {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background:
+        radial-gradient(circle at 20% 50%, rgba(150, 116, 221, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(92, 61, 156, 0.14) 0%, transparent 50%),
+        radial-gradient(circle at 60% 20%, rgba(123, 91, 194, 0.18) 0%, transparent 40%);
+    animation: global-shift 18s ease-in-out infinite;
+    top: -50%;
+    left: -50%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.page:not(.day-page):not(.night-page)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        repeating-linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.16) 0px,
+            rgba(0, 0, 0, 0.16) 2px,
+            transparent 2px,
+            transparent 34px,
+            rgba(0, 0, 0, 0.14) 34px,
+            rgba(0, 0, 0, 0.14) 36px,
+            transparent 36px,
+            transparent 72px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.12) 0px,
+            rgba(0, 0, 0, 0.12) 1px,
+            transparent 1px,
+            transparent 16px
+        ),
+        conic-gradient(from 118deg at 22% 22%, transparent 0 352deg, rgba(0, 0, 0, 0.22) 352deg 356deg, transparent 356deg 360deg),
+        conic-gradient(from 120deg at 26% 31%, transparent 0 352.5deg, rgba(0, 0, 0, 0.18) 352.5deg 355.7deg, transparent 355.7deg 360deg),
+        conic-gradient(from 122deg at 30% 40%, transparent 0 353deg, rgba(0, 0, 0, 0.14) 353deg 355.3deg, transparent 355.3deg 360deg),
+        conic-gradient(from 300deg at 77% 68%, transparent 0 352deg, rgba(0, 0, 0, 0.2) 352deg 356deg, transparent 356deg 360deg),
+        conic-gradient(from 302deg at 73% 59%, transparent 0 352.6deg, rgba(0, 0, 0, 0.16) 352.6deg 355.7deg, transparent 355.7deg 360deg),
+        conic-gradient(from 304deg at 69% 50%, transparent 0 353deg, rgba(0, 0, 0, 0.12) 353deg 355.1deg, transparent 355.1deg 360deg),
+        repeating-linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.03) 0px,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px,
+            transparent 8px
+        ),
+        radial-gradient(circle at 12% 24%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 77% 38%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 42% 70%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1.4px);
+    background-size:
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        auto,
+        260px 260px,
+        300px 300px,
+        340px 340px;
+    opacity: 0.34;
+    animation: global-twinkle 8s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes global-shift {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(50px, 50px); }
+}
+
+@keyframes global-twinkle {
+    from { opacity: 0.22; }
+    to { opacity: 0.42; }
+}
+
+.page:not(.day-page):not(.night-page) > * {
+    position: relative;
+    z-index: 1;
+}
+
 .home-page,
 .help-page {
     display: flex;
@@ -107,7 +205,6 @@ button {
     }
 
 .game-over-page {
-    background: #0f172a !important; /* Dark blue background */
     display: flex;
     justify-content: center;
     align-items: center;
