@@ -101,8 +101,7 @@ export function setupGameLogic(socket, gameState) {
         
         // Optionally, you can also display this on the screen temporarily
         const waitingText = document.getElementById('night-waiting-text');
-        if (waitingText) {night-action-required
-
+        if (waitingText) {
             waitingText.textContent = `Vision received: ${data.target} is a ${data.role}!`;
             waitingText.classList.remove('hidden');
         }
@@ -687,8 +686,50 @@ export function setupGameLogic(socket, gameState) {
         // Send a terrifying message to their chat
         appendToGameChat(`[CURSE]: You were bitten in the night! You are now a WOLF! Your new goal is to eliminate the village.`);
         
-        // Optional: Show a browser alert just to make absolutely sure they notice
-        alert("YOU WERE BITTEN! You have transformed into a Werewolf!");
+        // --- NEW CUSTOM RED POP-UP ---
+        const modal = document.createElement('div');
+        modal.id = 'infectedModal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center;
+            align-items: center; z-index: 2000;
+        `;
+        
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: var(--bg); padding: 40px; border-radius: 15px;
+            text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.8);
+            border: 3px solid #ef4444;
+        `;
+        
+        const title = document.createElement('h2');
+        title.textContent = 'YOU WERE BITTEN!';
+        title.style.color = '#ef4444'; // Bright Red
+        
+        const message = document.createElement('p');
+        message.style.fontSize = '1.3rem';
+        message.style.margin = '20px 0';
+        message.textContent = 'You have transformed into a Werewolf! Your new goal is to eliminate the village.';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Accept your fate';
+        closeBtn.style.cssText = `
+            padding: 10px 20px; background: #ef4444; color: #fff; 
+            border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem;
+            transition: 0.3s; font-family: 'VT323', monospace;
+        `;
+        closeBtn.onclick = () => modal.remove();
+
+        modalContent.appendChild(title);
+        modalContent.appendChild(message);
+        modalContent.appendChild(closeBtn);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+        // Auto-remove the modal after 8 seconds just in case they forget to close it
+        setTimeout(() => {
+            if (document.getElementById('infectedModal')) modal.remove();
+        }, 8000);
     });
     /* ========================================================================== */
     /* HELPER FUNCTIONS                                                           */

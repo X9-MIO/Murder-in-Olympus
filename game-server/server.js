@@ -104,20 +104,21 @@ function buildRoleList(playerCount, roleConfig = null) {
     for (let i = 0; i < roleConfig.wolves && roles.length < playerCount; i++) {
       roles.push("Wolf");
     }
-    
     // Add seers
     for (let i = 0; i < roleConfig.seers && roles.length < playerCount; i++) {
       roles.push("Seer");
     }
-    
     // Add healers
     for (let i = 0; i < roleConfig.healers && roles.length < playerCount; i++) {
       roles.push("Healer");
     }
-    
     // Add little girls
     for (let i = 0; i < roleConfig.littleGirls && roles.length < playerCount; i++) {
       roles.push("Little Girl");
+    }
+    // Add Artemis!
+    for (let i = 0; i < roleConfig.artemis && roles.length < playerCount; i++) {
+      roles.push("Artemis");
     }
     
     // Fill remaining with villagers
@@ -264,7 +265,7 @@ function revealNightActions(roomCode) {
   const ArtemisAction = actions.find(a => a.action_type === "Artemis-shoot");
   if (ArtemisAction && ArtemisAction.target_name && ArtemisAction.target_name !== "Do not shoot") {
     const alivePlayers = dbFns.getAlivePlayers(roomCode);
-    const target = alivePlayers.find(p => p.display_name === sheriffAction.target_name);
+    const target = alivePlayers.find(p => p.display_name === ArtemisAction.target_name);
     const sheriffPlayer = alivePlayers.find(p => p.role === "Artemis");
 
     if (target && sheriffPlayer) {
@@ -487,11 +488,12 @@ io.on("connection", (socket) => {
     delete socketToUser[socket.id];
   });
 
-  /* ---------------------- Create Room ---------------------- */
+ /* ---------------------- Create Room ---------------------- */
   socket.on("create-room", (numberOfPlayer, creatorname, roleConfig = null) => {
     const code = createUniqueRoomCode();
 
-    dbFns.createRoom(code, numberOfPlayer, socket.id, roleConfig);
+    // REMOVE roleConfig from here so the database doesn't crash!
+    dbFns.createRoom(code, numberOfPlayer, socket.id); 
     dbFns.addPlayer(code, socket.id, creatorname, 1);
 
     socketToUser[socket.id] = {
@@ -500,8 +502,11 @@ io.on("connection", (socket) => {
     };
 
     createRuntimeRoom(code);
-    socket.join(code);
+    
+    // Save the custom roles into the server's memory instead!
+    runtimeRooms[code].roleConfig = roleConfig; 
 
+    socket.join(code);
     socket.emit("room-created", code);
 
     const players = dbFns.getPlayers(code).map((p) => p.display_name);
@@ -509,7 +514,7 @@ io.on("connection", (socket) => {
   });
 
   /* ---------------------- Check Room ---------------------- */
-  socket.on("check-if-room-exists", (roomCode) => {
+  socket.on("check-if-room-exists", (roomCode, requestedName) => {
     const room = dbFns.getRoom(roomCode);
 
     if (!room) {
@@ -521,6 +526,18 @@ io.on("connection", (socket) => {
     if (players.length >= room.number_of_players) {
       socket.emit("RoomCheck", "full");
       return;
+    }
+
+    
+    if (requestedName) {
+      const nameTaken = players.some(
+        (p) => p.display_name.toLowerCase() === requestedName.toLowerCase()
+      );
+      
+      if (nameTaken) {
+        socket.emit("RoomCheck", "name-taken");
+        return;
+      }
     }
 
     socket.emit("RoomCheck", "exists");
@@ -570,7 +587,9 @@ io.on("connection", (socket) => {
     if (!room || room.creator_socket_id !== socket.id) return;
 
     const players = dbFns.getPlayers(roomCode);
-    const roleConfig = dbFns.getRoleConfig(roomCode);
+    
+    // Pull the roles directly from memory instead of the database!
+    const roleConfig = runtimeRooms[roomCode].roleConfig; 
     const roles = buildRoleList(players.length, roleConfig);
 
     // Assign shuffled roles fairly
