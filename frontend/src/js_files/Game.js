@@ -9,6 +9,7 @@ export function setupGameLogic(socket, gameState) {
     
     let discussionCountdownInterval = null;
     let nightCountdownInterval = null;
+    let gameOverCountdownInterval = null;
 
     /* ========================================================================== */
     /* 2. GAME START & ROLE REVEAL                                                */
@@ -61,8 +62,13 @@ export function setupGameLogic(socket, gameState) {
         const roleCard = document.getElementById("roleCard"); 
         const revealStatusText = document.getElementById("reveal-status-text"); 
 
-        if (rolePrefix) rolePrefix.textContent = "You are...";
+        // Reset the screen for the new game
+        if (roleCard) roleCard.classList.remove("flipped");
         if (cardRoleText) cardRoleText.style.opacity = "0";
+        if (revealStatusText) revealStatusText.textContent = "";
+        
+        // Clear the prefix text so we can typewrite it later!
+        if (rolePrefix) rolePrefix.textContent = ""; 
 
         setTimeout(() => {
             const introScreen = document.querySelector(".intro-screen");
@@ -71,24 +77,33 @@ export function setupGameLogic(socket, gameState) {
             const gameContent = document.getElementById("actualGameContent");
             if(gameContent) gameContent.classList.remove("hidden");
 
+            // 1. TYPEWRITE THE SUSPENSE TEXT!
+            if (rolePrefix) typeWriterEffect(rolePrefix, "You are...", 60);
+
             let timeLeft = 5;
             const countdownInterval = setInterval(() => {
                 timeLeft--;
-                if (revealStatusText && timeLeft > 0) revealStatusText.textContent = `Revealing role in ${timeLeft} seconds...`;
+                if (revealStatusText && timeLeft > 0) {
+                    // Don't typewrite the numbers, just update them normally
+                    revealStatusText.textContent = `Revealing role in ${timeLeft} seconds...`;
+                }
             }, 1000);
 
             setTimeout(() => {
                 clearInterval(countdownInterval); 
                 if (roleCard) roleCard.classList.add("flipped");
                 
-                if (rolePrefix) rolePrefix.textContent = "You are the";
+                // Fade in the big colored text (e.g. "Wolf")
                 if (cardRoleText) cardRoleText.style.opacity = "1";
-                if (revealStatusText) revealStatusText.textContent = "Your role is revealed! Moving to discussion...";
+                
+                // 2. TYPEWRITE THE FINAL REVEAL TEXTS!
+                if (rolePrefix) typeWriterEffect(rolePrefix, "You are the", 40);
+                if (revealStatusText) typeWriterEffect(revealStatusText, "Your role is revealed! Moving to discussion...", 30);
+                
             }, 5000); 
 
         }, 6000); 
     });
-
 
     /* ========================================================================== */
     /* PRIVATE ROLE FEEDBACK LOGIC                                                */
@@ -418,8 +433,7 @@ export function setupGameLogic(socket, gameState) {
         showPage('nightpage'); 
         
         const nightMsg = document.getElementById('night-message-text');
-        if (nightMsg) nightMsg.textContent = data.message;
-        
+        if (nightMsg) typeWriterEffect(nightMsg, data.message, 40);        
         const actionContainer = document.getElementById('night-action-container');
         const waitingText = document.getElementById('night-waiting-text');
         
@@ -429,8 +443,7 @@ export function setupGameLogic(socket, gameState) {
     
     socket.on('night-action-required', (data) => {
         const nightMsg = document.getElementById('night-message-text');
-        if (nightMsg) nightMsg.textContent = data.message;
-        
+        if (nightMsg) typeWriterEffect(nightMsg, data.message, 40);        
         const actionContainer = document.getElementById('night-action-container');
         const waitingText = document.getElementById('night-waiting-text');
         const nightTimer = document.getElementById('night-timer');
@@ -555,7 +568,7 @@ export function setupGameLogic(socket, gameState) {
         showPage('daypage'); 
         
         const dayMsg = document.getElementById('day-message-text');
-        if (dayMsg) dayMsg.textContent = data.message;
+        if (dayMsg) typeWriterEffect(dayMsg, data.message, 45);
         appendToGameChat(`[NARRATOR]: ${data.message}`);
         
         // Loop through everyone who died and remove them!
@@ -627,13 +640,57 @@ export function setupGameLogic(socket, gameState) {
         if (msg) {
             typeWriterEffect(msg, data.message, 45); 
         }
+
+        let timeLeft = 20;
+
+        let timerDisplay = document.getElementById('game-over-timer-display');
+        if (!timerDisplay) {
+            timerDisplay = document.createElement('p');
+            timerDisplay.id = 'game-over-timer-display';
+            timerDisplay.style.color = 'var(--muted)';
+            timerDisplay.style.marginTop = '15px';
+            
+            const backToLobbyBtn = document.getElementById('backToLobbyBtn');
+            if (backToLobbyBtn) {
+                backToLobbyBtn.parentElement.parentNode.insertBefore(timerDisplay, backToLobbyBtn.parentElement);
+            }
+        }
+        
+        timerDisplay.textContent = `Auto-returning to Home in ${timeLeft}s...`;
+
+        if (gameOverCountdownInterval) clearInterval(gameOverCountdownInterval);
+        
+        gameOverCountdownInterval = setInterval(() => {
+            timeLeft--;
+            if (timerDisplay) timerDisplay.textContent = `Auto-returning to Home in ${timeLeft}s...`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(gameOverCountdownInterval);
+                window.location.reload(); 
+            }
+        }, 1000);
     });
 
    const backToLobbyBtn = document.getElementById('backToLobbyBtn');
     if (backToLobbyBtn) {
         backToLobbyBtn.onclick = () => {
-            // Instead of reloading the page, tell the server to restart the room!
+            // Cancel the timer so they don't get kicked while loading!
+            if (gameOverCountdownInterval) clearInterval(gameOverCountdownInterval); 
             socket.emit('play-again', gameState.currentRoom); 
+        };
+    }
+
+    socket.on('play-again-failed', (errorMessage) => {
+        alert(errorMessage);
+        window.location.reload();
+    });
+
+    const gameOverHomeBtn = document.getElementById('gameOverHomeBtn');
+    if (gameOverHomeBtn) {
+        gameOverHomeBtn.onclick = () => {
+            // Cancel the timer here too!
+            if (gameOverCountdownInterval) clearInterval(gameOverCountdownInterval);
+            window.location.reload(); 
         };
     }
 
@@ -731,19 +788,33 @@ export function setupGameLogic(socket, gameState) {
             if (document.getElementById('infectedModal')) modal.remove();
         }, 8000);
     });
+
+
+    socket.on('host-disconnected', () => {
+        alert("The Host has left the game. The room has been closed.");
+        window.location.reload(); // This cleanly boots them back to the Home screen
+    });
+
     /* ========================================================================== */
     /* HELPER FUNCTIONS                                                           */
     /* ========================================================================== */
 
     function typeWriterEffect(element, text, speed = 40, callback) {
+        // Clear any existing typing animation on this specific element first!
+        if (element.typewriterInterval) {
+            clearInterval(element.typewriterInterval);
+        }
+        
         element.textContent = ""; 
         let i = 0;
-        const interval = setInterval(() => {
+        
+        element.typewriterInterval = setInterval(() => {
             if (i < text.length) {
                 element.textContent += text.charAt(i);
                 i++;
             } else {
-                clearInterval(interval);
+                clearInterval(element.typewriterInterval);
+                element.typewriterInterval = null; // Clean up
                 if (callback) callback(); 
             }
         }, speed); 

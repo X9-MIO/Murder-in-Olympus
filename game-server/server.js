@@ -174,62 +174,61 @@ function startNightPhase(roomCode) {
     role: p.role,
   }));
 
-  const wolves = alivePlayers.filter((p) => p.role === "Wolf");
-  const healer   = alivePlayers.find((p) => p.role === "Healer");
-  const seer     = alivePlayers.find((p) => p.role === "Seer");
-  const littleG  = alivePlayers.find((p) => p.role === "Little Girl");
-  const Artemis   = alivePlayers.find((p) => p.role === "Artemis");
+  const wolves    = alivePlayers.filter((p) => p.role === "Wolf");
+  const healers   = alivePlayers.filter((p) => p.role === "Healer");
+  const seers     = alivePlayers.filter((p) => p.role === "Seer");
+  const littleGs  = alivePlayers.filter((p) => p.role === "Little Girl");
+  const artemises = alivePlayers.filter((p) => p.role === "Artemis");
 
   const allNames     = alivePlayers.map((p) => p.name);
   const nonWolfNames = alivePlayers.filter((p) => p.role !== "Wolf").map((p) => p.name);
 
   // --- SEND ACTIONS TO EVERYONE AT THE SAME TIME ---
 
-  if (seer) {
+  seers.forEach(seer => {
     io.to(seer.id).emit("night-action-required", {
       type: "seer-inspect",
       targets: allNames.filter((n) => n !== seer.name),
       message: "Choose a player to inspect...",
       duration: 20,
     });
-  }
+  });
 
-  if (healer) {
+  healers.forEach(healer => {
     io.to(healer.id).emit("night-action-required", {
       type: "healer-save",
-      targets: allNames, // allow self-save
+      targets: allNames, 
       message: "Choose a player to save...",
       duration: 20,
     });
-  }
+  });
 
   wolves.forEach(wolf => {
     io.to(wolf.id).emit("night-action-required", {
       type: "werewolf-kill",
-      targets: nonWolfNames, // They can't kill other wolves!
+      targets: nonWolfNames, 
       message: "Choose a player to eliminate tonight...",
       duration: 20,
     });
   });
 
-  if (littleG) {
+  littleGs.forEach(littleG => {
     io.to(littleG.id).emit("night-action-required", {
       type: "little-girl-peek",
       targets: ["Click to Peek at the Wolf"],
       message: "WARNING: You have a 70% chance to be seen!",
-      duration: 10 + Math.floor(Math.random() * 10), // Changed to random number between 10s and 19s so her timer perfectly syncs with everyone else
+      duration: 10 + Math.floor(Math.random() * 10), 
     });
-  }
+  });
 
-  if (Artemis) {
-    io.to(Artemis.id).emit("night-action-required", {
+  artemises.forEach(artemis => {
+    io.to(artemis.id).emit("night-action-required", {
       type: "Artemis-shoot",
-      // Give him the option to not shoot anyone, plus the rest of the players
-      targets: ["Do not shoot", ...allNames.filter((n) => n !== Artemis.name)],
+      targets: ["Do not shoot", ...allNames.filter((n) => n !== artemis.name)],
       message: "Shoot a Wolf! If you shoot an innocent, YOU will die of guilt!",
       duration: 20,
     });
-  }
+  });
 
   // --- START THE ONE GLOBAL TIMER ---
   // When 20 seconds are up, the server automatically resolves everything!
@@ -247,48 +246,55 @@ function revealNightActions(roomCode) {
 
   dbFns.updateRoomPhase(roomCode, "action-reveal");
   const actions = dbFns.getNightActions(roomCode);
+  const alivePlayers = dbFns.getAlivePlayers(roomCode);
 
-  let deaths = []; // We use an array now, because multiple people can die!
+  let deaths = []; 
 
-  // 1. Resolve Wolf kill
+  // 1. Resolve Wolf kill & Multiple Healers
   const wolfVotes = actions.filter((a) => a.action_type === "werewolf-kill").map((a) => a.target_name).filter(Boolean);
-  const healerSave = actions.find((a) => a.action_type === "healer-save");
-  const savedName  = healerSave ? healerSave.target_name : null;
+  
+  // Get an array of everyone who was saved by any Healer
+  const healerSaves = actions.filter((a) => a.action_type === "healer-save").map(a => a.target_name).filter(Boolean);
 
   let wolfKill = majorityChoice(wolfVotes);
-  if (wolfKill && savedName && wolfKill === savedName) {
-    wolfKill = null; // Healer saved them!
+  
+  // If the wolf's target is in the list of people saved by ANY Healer, they live!
+  if (wolfKill && healerSaves.includes(wolfKill)) {
+    wolfKill = null; 
   }
   if (wolfKill) deaths.push(wolfKill);
 
-  // 2. Resolve Artemis shot
-  const ArtemisAction = actions.find(a => a.action_type === "Artemis-shoot");
-  if (ArtemisAction && ArtemisAction.target_name && ArtemisAction.target_name !== "Do not shoot") {
-    const alivePlayers = dbFns.getAlivePlayers(roomCode);
-    const target = alivePlayers.find(p => p.display_name === ArtemisAction.target_name);
-    const sheriffPlayer = alivePlayers.find(p => p.role === "Artemis");
+  // 2. Resolve Multiple Artemis shots
+  const artemisActions = actions.filter(a => a.action_type === "Artemis-shoot");
+  
+  artemisActions.forEach(action => {
+    if (action.target_name && action.target_name !== "Do not shoot") {
+      const target = alivePlayers.find(p => p.display_name === action.target_name);
+      // We must find the specific Artemis who shot THIS arrow using player_name
+      const shooter = alivePlayers.find(p => p.display_name === action.player_name); 
 
-    if (target && sheriffPlayer) {
-      if (target.role === "Wolf") {
-        deaths.push(target.display_name); // Good shot! The Wolf dies.
-      } else {
-        deaths.push(sheriffPlayer.display_name); // Bad shot! Sheriff dies instead.
+      if (target && shooter) {
+        if (target.role === "Wolf") {
+          deaths.push(target.display_name); // Good shot! Wolf dies.
+        } else {
+          deaths.push(shooter.display_name); // Bad shot! That specific Artemis dies.
+        }
       }
     }
-  }
+  });
 
-  // Make sure we don't list the same person twice (if Wolf & Sheriff killed the same guy)
-  deaths = [...new Set(deaths)];
-
-  // Actually eliminate them in the database
+  deaths = [...new Set(deaths)]; // Remove duplicates
   deaths.forEach(name => dbFns.eliminatePlayerByName(roomCode, name));
 
-  if (savedName) {
-    const savedPlayer = dbFns.getAlivePlayers(roomCode).find(p => p.display_name === savedName);
-    if (savedPlayer) {
-        io.to(savedPlayer.socket_id).emit("you-were-saved");
+  // Loop through all saved players and notify them!
+  healerSaves.forEach(savedName => {
+    if (savedName && savedName !== "Do not heal") {
+      const savedPlayer = alivePlayers.find(p => p.display_name === savedName);
+      if (savedPlayer) {
+          io.to(savedPlayer.socket_id).emit("you-were-saved");
+      }
     }
-  }
+  });
 
   // Build the narrative message
   let morningMessage = "The sun rises over Olympus. ";
@@ -326,7 +332,7 @@ function revealNightActions(roomCode) {
   const winner = checkGameOver(roomCode);
   if (winner) {
     dbFns.setWinner(roomCode, winner);
-    dbFns.updateRoomPhase(roomCode, "game_startNightPhaseover");
+    dbFns.updateRoomPhase(roomCode, "game_over");
     setTimeout(() => {
       io.to(roomCode).emit("game-over", {
         winner,
@@ -522,6 +528,11 @@ io.on("connection", (socket) => {
       return;
     }
 
+    if (room.game_phase !== "lobby") {
+      socket.emit("RoomCheck", "started");
+      return;
+    }
+
     const players = dbFns.getPlayers(roomCode);
     if (players.length >= room.number_of_players) {
       socket.emit("RoomCheck", "full");
@@ -552,9 +563,23 @@ io.on("connection", (socket) => {
       return;
     }
 
+    if (room.game_phase !== "lobby") {
+      return; 
+    }
+
     const players = dbFns.getPlayers(roomCode);
     if (players.length >= room.number_of_players) {
       socket.emit("room-full", roomCode);
+      return;
+    }
+
+    const normalizedRequestedName = String(displayName || "").trim().toLowerCase();
+    const nameAlreadyExists = players.some(
+      (p) => String(p.display_name || "").trim().toLowerCase() === normalizedRequestedName
+    );
+
+    if (nameAlreadyExists) {
+      socket.emit("name-taken", roomCode);
       return;
     }
 
@@ -562,6 +587,8 @@ io.on("connection", (socket) => {
     dbFns.addPlayer(roomCode, socket.id, displayName, 0);
 
     socketToUser[socket.id] = { roomCode, displayName };
+
+    socket.emit("join-room-success", roomCode);
 
     const updatedPlayers = dbFns.getPlayers(roomCode).map((p) => p.display_name);
     io.to(roomCode).emit("update-players", updatedPlayers);
@@ -653,6 +680,7 @@ io.on("connection", (socket) => {
 
     // Seer logic: Instant feedback
     if (actionData.type === "seer-inspect" && player.role === "Seer" && actionData.target) {
+      // Use .find() here because there is only one target being inspected!
       const target = getAlivePlayers(roomCode).find((p) => p.display_name === actionData.target);
       const targetRole = target ? target.role : "Unknown";
       io.to(socket.id).emit("seer-result", { target: actionData.target, role: targetRole });
@@ -677,20 +705,28 @@ io.on("connection", (socket) => {
     
   });
 
-  /* ---------------------- Play Again / Reset ---------------------- */
+ /* ---------------------- Play Again / Reset ---------------------- */
   socket.on("play-again", (roomCode) => {
     const room = dbFns.getRoom(roomCode);
     if (!room) return;
 
-    // 1. Reset DB roles, votes, and phase
-    dbFns.resetRoomForNewGame(roomCode);
+    // NEW: If the room is no longer in game_over or lobby, the next game already started!
+    if (room.game_phase !== "game_over" && room.game_phase !== "lobby") {
+      // Tell the late player they missed the boat!
+      socket.emit("play-again-failed", "The next game has already started without you!");
+      return; 
+    }
 
-    // 2. Tell everyone to go back to the lobby
-    io.to(roomCode).emit("room-reset");
+    // 1. Only reset the database if it hasn't been reset yet!
+    if (room.game_phase === "game_over") {
+      dbFns.resetRoomForNewGame(roomCode);
+    }
 
-    // 3. Send a fresh player list (all alive again)
+    // 2. Send THIS specific player back to the lobby
+    socket.emit("room-reset");
+
+    // 3. Update the player list for everyone currently waiting in the lobby
     const players = dbFns.getPlayers(roomCode).map((p) => p.display_name);
     io.to(roomCode).emit("update-players", players);
   });
-
 })

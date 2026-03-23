@@ -7,7 +7,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #1a0a2e 0%, #2d1444 50%, #1a0a2e 100%);
+    background:
+        radial-gradient(circle at 15% 20%, rgba(124, 87, 200, 0.32) 0%, transparent 38%),
+        radial-gradient(circle at 85% 80%, rgba(92, 52, 168, 0.28) 0%, transparent 34%),
+        linear-gradient(135deg, #130724 0%, #1a0a2e 35%, #2f1450 70%, #120622 100%);
     position: relative;
     overflow: hidden;
     gap: 60px;
@@ -15,6 +18,9 @@
 }
 
 .home-title-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
     text-align: center;
     position: relative;
     z-index: 1;
@@ -22,16 +28,14 @@
 }
 
 .home-main-title {
-    margin: 0;
-    font-size: 4.5rem;
-    font-weight: 900;
-    font-family: 'Cinzel', serif;
-    background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #b8860b 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
-    letter-spacing: 2px;
+    display: block;
+    width: min(76vw, 760px);
+    max-width: 92%;
+    height: auto;
+    margin: 0 auto;
+    background-color: transparent;
+    object-fit: contain;
+    object-position: center;
 }
 
 /* Animated background effect - mystical glow */
@@ -40,11 +44,71 @@
     position: absolute;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(139, 69, 19, 0.08) 0%, transparent 50%);
-    animation: shift 15s ease-in-out infinite;
+    background:
+        radial-gradient(circle at 20% 50%, rgba(150, 116, 221, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(92, 61, 156, 0.14) 0%, transparent 50%),
+        radial-gradient(circle at 60% 20%, rgba(123, 91, 194, 0.18) 0%, transparent 40%);
+    animation: shift 18s ease-in-out infinite;
     top: -50%;
     left: -50%;
+    pointer-events: none;
+}
+
+.home-page::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        repeating-linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.16) 0px,
+            rgba(0, 0, 0, 0.16) 2px,
+            transparent 2px,
+            transparent 34px,
+            rgba(0, 0, 0, 0.14) 34px,
+            rgba(0, 0, 0, 0.14) 36px,
+            transparent 36px,
+            transparent 72px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.12) 0px,
+            rgba(0, 0, 0, 0.12) 1px,
+            transparent 1px,
+            transparent 16px
+        ),
+        conic-gradient(from 118deg at 22% 22%, transparent 0 352deg, rgba(0, 0, 0, 0.22) 352deg 356deg, transparent 356deg 360deg),
+        conic-gradient(from 120deg at 26% 31%, transparent 0 352.5deg, rgba(0, 0, 0, 0.18) 352.5deg 355.7deg, transparent 355.7deg 360deg),
+        conic-gradient(from 122deg at 30% 40%, transparent 0 353deg, rgba(0, 0, 0, 0.14) 353deg 355.3deg, transparent 355.3deg 360deg),
+        conic-gradient(from 300deg at 77% 68%, transparent 0 352deg, rgba(0, 0, 0, 0.2) 352deg 356deg, transparent 356deg 360deg),
+        conic-gradient(from 302deg at 73% 59%, transparent 0 352.6deg, rgba(0, 0, 0, 0.16) 352.6deg 355.7deg, transparent 355.7deg 360deg),
+        conic-gradient(from 304deg at 69% 50%, transparent 0 353deg, rgba(0, 0, 0, 0.12) 353deg 355.1deg, transparent 355.1deg 360deg),
+        repeating-linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.03) 0px,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px,
+            transparent 8px
+        ),
+        radial-gradient(circle at 12% 24%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 77% 38%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 42% 70%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1.4px);
+    background-size:
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        auto,
+        260px 260px,
+        300px 300px,
+        340px 340px;
+    opacity: 0.34;
+    animation: twinkle 8s ease-in-out infinite alternate;
+    pointer-events: none;
 }
 
 @keyframes shift {
@@ -56,21 +120,51 @@
     }
 }
 
+@keyframes twinkle {
+    from {
+        opacity: 0.22;
+    }
+    to {
+        opacity: 0.42;
+    }
+}
+
 .home-page .card {
-    background: rgba(22, 8, 45, 0.8);
+    background: linear-gradient(180deg, rgba(32, 12, 58, 0.9) 0%, rgba(18, 8, 38, 0.9) 100%);
     backdrop-filter: blur(10px);
     padding: 48px 40px;
     width: 100%;
     max-width: 500px;
-    border-radius: 20px;
-    border: 2px solid #3d1f4d;
+    border-radius: 18px;
+    border: 2px solid rgba(212, 175, 55, 0.45);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 
-                inset 0 1px 0 rgba(212, 175, 55, 0.1),
-                0 0 20px rgba(212, 175, 55, 0.1);
+                inset 0 1px 0 rgba(255, 235, 170, 0.2),
+                inset 0 0 0 2px rgba(50, 24, 88, 0.75),
+                0 0 24px rgba(212, 175, 55, 0.2);
     text-align: center;
     position: relative;
     z-index: 1;
     animation: fadeInScale 0.6s ease-out;
+}
+
+.home-page .card::before,
+.home-page .card::after {
+    content: "";
+    position: absolute;
+    top: 14px;
+    bottom: 14px;
+    width: 6px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(212, 175, 55, 0.8) 0%, rgba(138, 103, 20, 0.9) 100%);
+    opacity: 0.65;
+}
+
+.home-page .card::before {
+    left: 12px;
+}
+
+.home-page .card::after {
+    right: 12px;
 }
 
 @keyframes fadeInScale {
@@ -86,28 +180,32 @@
 
 .home-page .subtitle {
     margin: 0 0 40px;
-    color: #a89878;
-    font-size: 1rem;
-    font-weight: 500;
-    letter-spacing: 0.5px;
+    color: #d9c89c;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .home-actions {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
 .home-actions button {
-    padding: 14px 24px;
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: 12px;
-    border: none;
+    padding: 15px 24px;
+    font-size: 1.08rem;
+    font-weight: 900;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    border-radius: 10px;
+    border: 1px solid rgba(120, 78, 12, 0.85);
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    letter-spacing: 0.25px;
+    line-height: 1.2;
 }
 
 .home-actions button::before {
@@ -126,11 +224,24 @@
 }
 
 .home-actions button.primary {
-    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
-    color: #1a0a2e;
-    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+    background: linear-gradient(180deg, #f2d377 0%, #d4af37 48%, #a97813 100%);
+    color: #190a29;
+    box-shadow: 0 10px 22px rgba(212, 175, 55, 0.3),
+                inset 0 1px 0 rgba(255, 248, 212, 0.65),
+                inset 0 -1px 0 rgba(97, 64, 8, 0.6);
     transform: translateY(0);
-    font-weight: 700;
+    font-weight: 900;
+    text-shadow: 0 1px 0 rgba(255, 245, 196, 0.35);
+}
+
+.home-actions button.primary::after {
+    content: "◈";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.85rem;
+    color: rgba(37, 16, 56, 0.55);
 }
 
 .home-actions button.primary:hover {

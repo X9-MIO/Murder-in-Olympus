@@ -20,7 +20,7 @@
 
 <div class="page home-page" id="homepage">
     <div class="home-title-section">
-        <h1 class="home-main-title">Murder in Olympus</h1>
+        <img class="home-main-title" src="/public/title4.png" alt="Murder in Olympus">
     </div>
     <div class="card">
         <p class="subtitle">A social deduction game</p>
@@ -37,6 +37,7 @@
 
 <div class="page join-page hidden" id="joinpage">
     <div class="card">
+        <button class="menu-back-btn" id="join-back-home-btn">← Home</button>
         <h1>Join Lobby</h1>
         <p class="subtitle">Enter your name and room code</p>
 
@@ -70,7 +71,7 @@
 
 
 <div class="page lobby-page hidden" id="lobby">
-    
+    <button class="lobby-back-btn hidden" id="backToJoinBtn">← Back</button>
 
     <h2>Room Code: <span id="room-code-display">...</span></h2>
 
@@ -101,6 +102,7 @@
 
 <div class="page create-room-page hidden" id="createroompage">
     <div class="card">
+        <button class="menu-back-btn" id="create-back-home-btn">← Home</button>
         <h1>Create Room</h1>
         <p class="subtitle">Set up your lobby</p>
 
@@ -132,7 +134,7 @@
        <div class="role-inputs">
                 <div class="role-input-group">
                     <label for="role-wolf">Wolves</label>
-                    <input type="number" id="role-wolf" min="1" max="1" value="1">
+                    <input type="number" id="role-wolf" min="1" max="2" value="1">
                 </div>
                 <div class="role-input-group">
                     <label for="role-seer">Seers</label>
@@ -330,7 +332,12 @@
     <div class="phase-content">
         <h1 class="phase-title" id="game-over-title">GAME OVER</h1>
         <p id="game-over-message" class="phase-message"></p>
-        <button id="backToLobbyBtn" class="primary" style="margin-top: 30px;">Play Again</button>
+        
+        <div style="display: flex; justify-content: center; gap: 15px; margin-top: 30px;">
+            <button id="backToLobbyBtn" class="primary">Play Again</button>
+            <button id="gameOverHomeBtn" class="primary">Home</button>
+        </div>
+        
     </div>
 </div>
 
@@ -338,4 +345,4 @@
 
 <script type="module" src="/src/js_files/main.js"></script>
 </body>
-</html>
+</html>-
