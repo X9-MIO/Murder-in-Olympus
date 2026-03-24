@@ -57,6 +57,30 @@ export function setupGameLogic(socket, gameState) {
         
         showPage("gamepage"); 
         
+        const introScreen = document.querySelector(".intro-screen");
+        const introMain = document.querySelector(".intro-main");
+        const introSub = document.querySelector(".intro-sub");
+        const gameContent = document.getElementById("actualGameContent");
+
+        // Fully reset intro/game visibility so Play Again starts from the intro sequence.
+        if (introScreen) introScreen.classList.remove("hidden");
+        if (gameContent) gameContent.classList.add("hidden");
+
+        // Restart CSS animations every round.
+        if (introMain) {
+            introMain.classList.remove("typewriter");
+            introMain.style.width = "0";
+            void introMain.offsetWidth; // force reflow to restart animation
+            introMain.classList.add("typewriter");
+        }
+
+        if (introSub) {
+            introSub.classList.remove("fade-in");
+            introSub.style.opacity = "0";
+            void introSub.offsetWidth; // force reflow to restart animation
+            introSub.classList.add("fade-in");
+        }
+
         const rolePrefix = document.getElementById("role-prefix-text");
         const cardRoleText = document.getElementById("card-role-text");
         const roleCard = document.getElementById("roleCard"); 
@@ -71,10 +95,8 @@ export function setupGameLogic(socket, gameState) {
         if (rolePrefix) rolePrefix.textContent = ""; 
 
         setTimeout(() => {
-            const introScreen = document.querySelector(".intro-screen");
             if(introScreen) introScreen.classList.add("hidden");
-            
-            const gameContent = document.getElementById("actualGameContent");
+
             if(gameContent) gameContent.classList.remove("hidden");
 
             // 1. TYPEWRITE THE SUSPENSE TEXT!

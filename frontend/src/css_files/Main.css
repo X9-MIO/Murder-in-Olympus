@@ -169,6 +169,16 @@ body {
     color: var(--muted);
 }
 
+.help-page .card {
+    width: min(92vw, 560px);
+    max-height: 86vh;
+    overflow-y: auto;
+}
+
+.help-list strong {
+    color: var(--text);
+}
+
 .scene {
     position: relative;
     width: 100%;
