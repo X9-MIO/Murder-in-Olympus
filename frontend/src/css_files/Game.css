@@ -7,7 +7,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'VT323', monospace; /* Retro terminal font */
+    font-family: 'Cinzel', serif; /* Match the game's mythic theme */
     z-index: 9999; /* Ensure it covers everything */
 }
 
@@ -19,9 +19,15 @@
 }
 
 .intro-main {
-    font-size: 5rem;
-    color: white;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+    display: inline-block;
+    font-family: 'Dalek', 'Greek Rubone', 'Cinzel', serif;
+    font-size: 5.6rem;
+    font-weight: 900;
+    color: #f2c75c;
+    text-shadow:
+        0 0 8px rgba(212, 175, 55, 0.45),
+        0 0 18px rgba(212, 175, 55, 0.22),
+        0 2px 0 rgba(60, 35, 6, 0.9);
     margin-bottom: 20px;
     white-space: nowrap; /* Keep text on one line */
     overflow: hidden; /* Prerequisite for typewriter effect */
@@ -30,7 +36,9 @@
 
 .intro-sub {
     font-size: 2rem;
-    color: var(--muted);
+    font-weight: 700;
+    color: #d4af37;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.35);
     opacity: 0; /* Start invisible */
 }
 
@@ -45,8 +53,8 @@
 
 /* Keyframes */
 @keyframes typing {
-  from { width: 0 }
-  to { width: 100% } /* Expands width to reveal text */
+    from { width: 0 }
+    to { width: 100% } /* Expands width to reveal text */
 }
 
 @keyframes fadeIn {
