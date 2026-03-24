@@ -31,13 +31,6 @@ db.prepare(`
   )
 `).run();
 
-// Migration for existing DBs created before role_config existed
-const roomColumns = db.prepare(`PRAGMA table_info(rooms)`).all();
-const hasRoleConfig = roomColumns.some((col) => col.name === "role_config");
-if (!hasRoleConfig) {
-  db.prepare(`ALTER TABLE rooms ADD COLUMN role_config TEXT DEFAULT NULL`).run();
-}
-
 // Players
 db.prepare(`
   CREATE TABLE IF NOT EXISTS players (
