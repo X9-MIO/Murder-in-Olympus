@@ -9,6 +9,7 @@ export function setupGameLogic(socket, gameState) {
     
     let discussionCountdownInterval = null;
     let nightCountdownInterval = null;
+    let gameOverCountdownInterval = null;
 
     /* ========================================================================== */
     /* 2. GAME START & ROLE REVEAL                                                */
@@ -33,6 +34,7 @@ export function setupGameLogic(socket, gameState) {
             else if (role === "Seer") cardRoleText.style.color = "#a855f7"; // Purple
             else if (role === "Healer") cardRoleText.style.color = "#22c55e"; // Green
             else if (role === "Little Girl") cardRoleText.style.color = "#ec4899"; // Pink
+            else if (role === "Artemis") cardRoleText.style.color = "#eab308"; // Yellow
             else cardRoleText.style.color = "var(--accent)"; // Default Villager
         }
 
@@ -45,6 +47,7 @@ export function setupGameLogic(socket, gameState) {
         else if (role === "Seer") imagePath = "/public/seer.png"; 
         else if (role === "Healer") imagePath = "/public/healer.png";
         else if (role === "Little Girl") imagePath = "/public/little-girl.png";
+        else if (role === "Artemis") imagePath = "/public/artemis.png";
 
         if (roleImage) roleImage.src = imagePath; 
         if (messagingRoleImage) messagingRoleImage.src = imagePath;
@@ -54,39 +57,75 @@ export function setupGameLogic(socket, gameState) {
         
         showPage("gamepage"); 
         
+        const introScreen = document.querySelector(".intro-screen");
+        const introMain = document.querySelector(".intro-main");
+        const introSub = document.querySelector(".intro-sub");
+        const gameContent = document.getElementById("actualGameContent");
+
+        // Fully reset intro/game visibility so Play Again starts from the intro sequence.
+        if (introScreen) introScreen.classList.remove("hidden");
+        if (gameContent) gameContent.classList.add("hidden");
+
+        // Restart CSS animations every round.
+        if (introMain) {
+            introMain.classList.remove("typewriter");
+            introMain.style.width = "0";
+            void introMain.offsetWidth; // force reflow to restart animation
+            introMain.classList.add("typewriter");
+        }
+
+        if (introSub) {
+            introSub.classList.remove("fade-in");
+            introSub.style.opacity = "0";
+            void introSub.offsetWidth; // force reflow to restart animation
+            introSub.classList.add("fade-in");
+        }
+
         const rolePrefix = document.getElementById("role-prefix-text");
         const cardRoleText = document.getElementById("card-role-text");
         const roleCard = document.getElementById("roleCard"); 
         const revealStatusText = document.getElementById("reveal-status-text"); 
 
-        if (rolePrefix) rolePrefix.textContent = "You are...";
+        // Reset the screen for the new game
+        if (roleCard) roleCard.classList.remove("flipped");
         if (cardRoleText) cardRoleText.style.opacity = "0";
+        if (revealStatusText) revealStatusText.textContent = "";
+        
+        // Clear the prefix text so we can typewrite it later!
+        if (rolePrefix) rolePrefix.textContent = ""; 
 
         setTimeout(() => {
-            const introScreen = document.querySelector(".intro-screen");
             if(introScreen) introScreen.classList.add("hidden");
-            
-            const gameContent = document.getElementById("actualGameContent");
+
             if(gameContent) gameContent.classList.remove("hidden");
+
+            // 1. TYPEWRITE THE SUSPENSE TEXT!
+            if (rolePrefix) typeWriterEffect(rolePrefix, "You are...", 60);
 
             let timeLeft = 5;
             const countdownInterval = setInterval(() => {
                 timeLeft--;
-                if (revealStatusText && timeLeft > 0) revealStatusText.textContent = `Revealing role in ${timeLeft} seconds...`;
+                if (revealStatusText && timeLeft > 0) {
+                    // Don't typewrite the numbers, just update them normally
+                    revealStatusText.textContent = `Revealing role in ${timeLeft} seconds...`;
+                }
             }, 1000);
 
             setTimeout(() => {
                 clearInterval(countdownInterval); 
                 if (roleCard) roleCard.classList.add("flipped");
                 
-                if (rolePrefix) rolePrefix.textContent = "You are the";
+                // Fade in the big colored text (e.g. "Wolf")
                 if (cardRoleText) cardRoleText.style.opacity = "1";
-                if (revealStatusText) revealStatusText.textContent = "Your role is revealed! Moving to discussion...";
+                
+                // 2. TYPEWRITE THE FINAL REVEAL TEXTS!
+                if (rolePrefix) typeWriterEffect(rolePrefix, "You are the", 40);
+                if (revealStatusText) typeWriterEffect(revealStatusText, "Your role is revealed! Moving to discussion...", 30);
+                
             }, 5000); 
 
         }, 6000); 
     });
-
 
     /* ========================================================================== */
     /* PRIVATE ROLE FEEDBACK LOGIC                                                */
@@ -99,8 +138,7 @@ export function setupGameLogic(socket, gameState) {
         
         // Optionally, you can also display this on the screen temporarily
         const waitingText = document.getElementById('night-waiting-text');
-        if (waitingText) {night-action-required
-
+        if (waitingText) {
             waitingText.textContent = `Vision received: ${data.target} is a ${data.role}!`;
             waitingText.classList.remove('hidden');
         }
@@ -111,13 +149,6 @@ export function setupGameLogic(socket, gameState) {
         // Send a private, scary system message to the Wolf
         appendToGameChat(`[DANGER]: You heard a twig snap in the dark... You saw ${data.littleGirlName} peeking at you! They are the Little Girl!`);
     });
-
-
-
-
-
-
-
 
 
 
@@ -365,6 +396,57 @@ export function setupGameLogic(socket, gameState) {
         }, 1000);
     }
 
+    // Handle waking up and realizing the Healer saved you!
+    socket.on('you-were-saved', () => {
+        // 1. Send a private message in their chat
+        appendToGameChat(`[DIVINE LIGHT]: A warm light enveloped you in the dark. You were visited by the Healer!`);
+
+        // 2. Create the glorious pop-up modal
+        const modal = document.createElement('div');
+        modal.id = 'savedModal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center;
+            align-items: center; z-index: 2000;
+        `;
+        
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: var(--bg); padding: 40px; border-radius: 15px;
+            text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(34, 197, 94, 0.8);
+            border: 3px solid #22c55e;
+        `;
+        
+        const title = document.createElement('h2');
+        title.textContent = 'DIVINE INTERVENTION!';
+        title.style.color = '#22c55e'; // Bright Green
+        
+        const message = document.createElement('p');
+        message.style.fontSize = '1.3rem';
+        message.style.margin = '20px 0';
+        message.textContent = 'The Healer visited you in the night. You are protected from the beasts!';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Praise the Gods';
+        closeBtn.style.cssText = `
+            padding: 10px 20px; background: #22c55e; color: #fff; 
+            border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem;
+            transition: 0.3s;
+        `;
+        closeBtn.onclick = () => modal.remove();
+
+        modalContent.appendChild(title);
+        modalContent.appendChild(message);
+        modalContent.appendChild(closeBtn);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+        // Auto-remove the modal after 7 seconds just in case they forget to click close
+        setTimeout(() => {
+            if (document.getElementById('savedModal')) modal.remove();
+        }, 7000);
+    });
+
     /* ========================================================================== */
     /* 7. DAY & NIGHT CYCLE                                                       */
     /* ========================================================================== */
@@ -373,8 +455,7 @@ export function setupGameLogic(socket, gameState) {
         showPage('nightpage'); 
         
         const nightMsg = document.getElementById('night-message-text');
-        if (nightMsg) nightMsg.textContent = data.message;
-        
+        if (nightMsg) typeWriterEffect(nightMsg, data.message, 40);        
         const actionContainer = document.getElementById('night-action-container');
         const waitingText = document.getElementById('night-waiting-text');
         
@@ -384,8 +465,7 @@ export function setupGameLogic(socket, gameState) {
     
     socket.on('night-action-required', (data) => {
         const nightMsg = document.getElementById('night-message-text');
-        if (nightMsg) nightMsg.textContent = data.message;
-        
+        if (nightMsg) typeWriterEffect(nightMsg, data.message, 40);        
         const actionContainer = document.getElementById('night-action-container');
         const waitingText = document.getElementById('night-waiting-text');
         const nightTimer = document.getElementById('night-timer');
@@ -509,44 +589,40 @@ export function setupGameLogic(socket, gameState) {
     socket.on('night-actions-revealed', (data) => {
         showPage('daypage'); 
         
-        let morningMessage = "The sun rises over Olympus. ";
-        
-        // Use the eliminatedPlayer string directly from the server!
-        if (data.eliminatedPlayer) {
-            morningMessage += `Tragedy has struck. The werewolf eliminated ${data.eliminatedPlayer}!`;
-        } else {
-            morningMessage += `It is a miracle. Nobody was killed last night.`;
-        }
-        
         const dayMsg = document.getElementById('day-message-text');
-        if (dayMsg) dayMsg.textContent = morningMessage;
+        if (dayMsg) typeWriterEffect(dayMsg, data.message, 45);
+        appendToGameChat(`[NARRATOR]: ${data.message}`);
         
-        appendToGameChat(`[NARRATOR]: ${morningMessage}`);
-        
-        if (data.eliminatedPlayer === gameState.currentDisplayName) {
-            gameState.isEliminated = true;
-            if(gameChatInput) gameChatInput.disabled = true;
-            if(gameSendBtn) gameSendBtn.disabled = true;
-            
-            const chatInputContainer = document.getElementById('game-chat');
-            if(chatInputContainer) chatInputContainer.style.display = 'none';
-            
-            if(openVoteMenuBtn) openVoteMenuBtn.classList.add('hidden');
-            appendToGameChat(`[SYSTEM]: You have been eliminated. You can no longer participate.`);
-        }
-        
-        if (data.eliminatedPlayer) {
-            const gamePlayersList = document.getElementById("game-players-list");
-            if (gamePlayersList) {
-                const playerItems = gamePlayersList.querySelectorAll('li');
-                playerItems.forEach(item => {
-                    if (item.textContent.trim() === data.eliminatedPlayer) {
-                        item.remove();
-                    }
-                });
-            }
+        // Loop through everyone who died and remove them!
+        if (data.eliminatedPlayers && data.eliminatedPlayers.length > 0) {
+            data.eliminatedPlayers.forEach(deadPlayer => {
+                
+                if (deadPlayer === gameState.currentDisplayName) {
+                    gameState.isEliminated = true;
+                    if(gameChatInput) gameChatInput.disabled = true;
+                    if(gameSendBtn) gameSendBtn.disabled = true;
+                    
+                    const chatInputContainer = document.getElementById('game-chat');
+                    if(chatInputContainer) chatInputContainer.style.display = 'none';
+                    
+                    if(openVoteMenuBtn) openVoteMenuBtn.classList.add('hidden');
+                    appendToGameChat(`[SYSTEM]: You have been eliminated. You can no longer participate.`);
+                }
+                
+                const gamePlayersList = document.getElementById("game-players-list");
+                if (gamePlayersList) {
+                    const playerItems = gamePlayersList.querySelectorAll('li');
+                    playerItems.forEach(item => {
+                        if (item.textContent.trim() === deadPlayer) {
+                            item.remove();
+                        }
+                    });
+                }
+            });
         }
     });
+
+
 
     /* ========================================================================== */
     /* 8. HIDE/SHOW ROLE CARD LOGIC                                               */
@@ -586,13 +662,57 @@ export function setupGameLogic(socket, gameState) {
         if (msg) {
             typeWriterEffect(msg, data.message, 45); 
         }
+
+        let timeLeft = 20;
+
+        let timerDisplay = document.getElementById('game-over-timer-display');
+        if (!timerDisplay) {
+            timerDisplay = document.createElement('p');
+            timerDisplay.id = 'game-over-timer-display';
+            timerDisplay.style.color = 'var(--muted)';
+            timerDisplay.style.marginTop = '15px';
+            
+            const backToLobbyBtn = document.getElementById('backToLobbyBtn');
+            if (backToLobbyBtn) {
+                backToLobbyBtn.parentElement.parentNode.insertBefore(timerDisplay, backToLobbyBtn.parentElement);
+            }
+        }
+        
+        timerDisplay.textContent = `Auto-returning to Home in ${timeLeft}s...`;
+
+        if (gameOverCountdownInterval) clearInterval(gameOverCountdownInterval);
+        
+        gameOverCountdownInterval = setInterval(() => {
+            timeLeft--;
+            if (timerDisplay) timerDisplay.textContent = `Auto-returning to Home in ${timeLeft}s...`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(gameOverCountdownInterval);
+                window.location.reload(); 
+            }
+        }, 1000);
     });
 
    const backToLobbyBtn = document.getElementById('backToLobbyBtn');
     if (backToLobbyBtn) {
         backToLobbyBtn.onclick = () => {
-            // Instead of reloading the page, tell the server to restart the room!
+            // Cancel the timer so they don't get kicked while loading!
+            if (gameOverCountdownInterval) clearInterval(gameOverCountdownInterval); 
             socket.emit('play-again', gameState.currentRoom); 
+        };
+    }
+
+    socket.on('play-again-failed', (errorMessage) => {
+        alert(errorMessage);
+        window.location.reload();
+    });
+
+    const gameOverHomeBtn = document.getElementById('gameOverHomeBtn');
+    if (gameOverHomeBtn) {
+        gameOverHomeBtn.onclick = () => {
+            // Cancel the timer here too!
+            if (gameOverCountdownInterval) clearInterval(gameOverCountdownInterval);
+            window.location.reload(); 
         };
     }
 
@@ -623,19 +743,100 @@ export function setupGameLogic(socket, gameState) {
         if(openVoteMenuBtn) openVoteMenuBtn.classList.remove('hidden');
     });
 
+
+    // Handle the player being infected and turned into a Wolf
+    socket.on('you-turned-wolf', () => {
+        // Change their role locally
+        gameState.myRole = "Wolf";
+        
+        // Update the Role Card text to red
+        const cardRoleText = document.getElementById("card-role-text");
+        if (cardRoleText) {
+            cardRoleText.textContent = "Wolf";
+            cardRoleText.style.color = "#ef4444"; 
+        }
+        
+        // Update the Images to the Wolf image
+        const roleImage = document.getElementById("role-image");
+        const messagingRoleImage = document.getElementById("messaging-role-image");
+        if (roleImage) roleImage.src = "/public/wolf.png"; 
+        if (messagingRoleImage) messagingRoleImage.src = "/public/wolf.png";
+
+        // Send a terrifying message to their chat
+        appendToGameChat(`[CURSE]: You were bitten in the night! You are now a WOLF! Your new goal is to eliminate the village.`);
+        
+        // --- NEW CUSTOM RED POP-UP ---
+        const modal = document.createElement('div');
+        modal.id = 'infectedModal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center;
+            align-items: center; z-index: 2000;
+        `;
+        
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: var(--bg); padding: 40px; border-radius: 15px;
+            text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.8);
+            border: 3px solid #ef4444;
+        `;
+        
+        const title = document.createElement('h2');
+        title.textContent = 'YOU WERE BITTEN!';
+        title.style.color = '#ef4444'; // Bright Red
+        
+        const message = document.createElement('p');
+        message.style.fontSize = '1.3rem';
+        message.style.margin = '20px 0';
+        message.textContent = 'You have transformed into a Werewolf! Your new goal is to eliminate the village.';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Accept your fate';
+        closeBtn.style.cssText = `
+            padding: 10px 20px; background: #ef4444; color: #fff; 
+            border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem;
+            transition: 0.3s; font-family: 'VT323', monospace;
+        `;
+        closeBtn.onclick = () => modal.remove();
+
+        modalContent.appendChild(title);
+        modalContent.appendChild(message);
+        modalContent.appendChild(closeBtn);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+        // Auto-remove the modal after 8 seconds just in case they forget to close it
+        setTimeout(() => {
+            if (document.getElementById('infectedModal')) modal.remove();
+        }, 8000);
+    });
+
+
+    socket.on('host-disconnected', () => {
+        alert("The Host has left the game. The room has been closed.");
+        window.location.reload(); // This cleanly boots them back to the Home screen
+    });
+
     /* ========================================================================== */
     /* HELPER FUNCTIONS                                                           */
     /* ========================================================================== */
 
     function typeWriterEffect(element, text, speed = 40, callback) {
+        // Clear any existing typing animation on this specific element first!
+        if (element.typewriterInterval) {
+            clearInterval(element.typewriterInterval);
+        }
+        
         element.textContent = ""; 
         let i = 0;
-        const interval = setInterval(() => {
+        
+        element.typewriterInterval = setInterval(() => {
             if (i < text.length) {
                 element.textContent += text.charAt(i);
                 i++;
             } else {
-                clearInterval(interval);
+                clearInterval(element.typewriterInterval);
+                element.typewriterInterval = null; // Clean up
                 if (callback) callback(); 
             }
         }, speed); 

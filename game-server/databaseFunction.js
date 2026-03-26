@@ -70,6 +70,13 @@ function resetRoomForNewGame(roomCode) {
 
 // Player functions
 function addPlayer(roomCode, socketId, displayName, isHost = 0) {
+  // 1. Delete any leftover ghost records for this socket connection first
+  db.prepare(`
+    DELETE FROM players 
+    WHERE socket_id = ?
+  `).run(socketId);
+
+  // 2. Insert the fresh player into the new room securely
   db.prepare(`
     INSERT INTO players (room_code, socket_id, display_name, is_host)
     VALUES (?, ?, ?, ?)
