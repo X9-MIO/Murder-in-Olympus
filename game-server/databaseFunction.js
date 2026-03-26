@@ -212,6 +212,15 @@ function clearNightActions(roomCode, roundNumber = 1) {
   `).run(roomCode, roundNumber);
 }
 
+
+function useInspection(socketId) {
+  db.prepare(`
+    UPDATE players 
+    SET inspections_left = inspections_left - 1 
+    WHERE socket_id = ?
+  `).run(socketId);
+}
+
 module.exports = {
   createRoom,
   getRoom,
@@ -235,5 +244,6 @@ module.exports = {
   clearVotes,
   saveNightAction,
   getNightActions,
-  clearNightActions
+  clearNightActions,
+  useInspection
 };

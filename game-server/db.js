@@ -7,19 +7,10 @@ console.log("Opening SQLite DB at:", dbPath);
 
 const db = new Database(dbPath);
 
-// Simple write test so the file must be created
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS __db_test (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`).run();
+// Enable Foreign Key support explicitly
+db.pragma('foreign_keys = ON');
 
-db.prepare(`
-  INSERT INTO __db_test DEFAULT VALUES
-`).run();
-
-// Rooms
+// 1. Rooms (MUST be created first so other tables can link to it)
 db.prepare(`
   CREATE TABLE IF NOT EXISTS rooms (
     room_code TEXT PRIMARY KEY,
@@ -31,7 +22,7 @@ db.prepare(`
   )
 `).run();
 
-// Players
+// 2. Players
 db.prepare(`
   CREATE TABLE IF NOT EXISTS players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,11 +32,12 @@ db.prepare(`
     role TEXT NOT NULL DEFAULT 'Villager',
     eliminated INTEGER NOT NULL DEFAULT 0,
     is_host INTEGER NOT NULL DEFAULT 0,
+    inspections_left INTEGER NOT NULL DEFAULT 2,
     FOREIGN KEY (room_code) REFERENCES rooms(room_code)
   )
 `).run();
 
-// Messages
+// 3. Messages
 db.prepare(`
   CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +50,7 @@ db.prepare(`
   )
 `).run();
 
-// Votes
+// 4. Votes
 db.prepare(`
   CREATE TABLE IF NOT EXISTS votes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,7 +62,7 @@ db.prepare(`
   )
 `).run();
 
-// Night actions
+// 5. Night actions (Typo "prepare" removed from middle of string)
 db.prepare(`
   CREATE TABLE IF NOT EXISTS night_actions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

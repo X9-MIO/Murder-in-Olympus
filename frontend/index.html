@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Murder in Olympus</title>
-    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Cinzel:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.cdnfonts.com/css/dalek" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./src/css_files/Home.css">
     <link rel="stylesheet" href="./src/css_files/CreateRoom.css">
     <link rel="stylesheet" href="./src/css_files/GameMessaging.css">
@@ -21,7 +21,7 @@
 
 <div class="page home-page" id="homepage">
     <div class="home-title-section">
-        <img class="home-main-title" src="/public/title4.png" alt="Murder in Olympus">
+        <img class="home-main-title" src="./title4.png" alt="Murder in Olympus">
     </div>
     <div class="card">
         <p class="subtitle">A social deduction game</p>
@@ -34,9 +34,7 @@
 </div>
 
 
-    <!-- join  Lobby page -->
-
-<div class="page join-page hidden" id="joinpage">
+    <div class="page join-page hidden" id="joinpage">
     <div class="card">
         <button class="menu-back-btn" id="join-back-home-btn">← Home</button>
         <h1>Join Lobby</h1>
@@ -44,7 +42,7 @@
 
         <div class="field">
             <label>Display Name</label>
-            <input type="text" id="displayname" placeholder="Your name">
+            <input type="text" id="displayname" placeholder="Your name" maxlength="10">
         </div>
 
         <div class="field">
@@ -63,12 +61,6 @@
         <div class="error-message" id="display-name-error"></div>
     </div>
 </div>
-
-
-<!-- join  Lobby page -->
-
-
-<!-- lobby page -->
 
 
 <div class="page lobby-page hidden" id="lobby">
@@ -95,12 +87,6 @@
     <button class="primary hidden" id="startgamebtn">Start Game</button>
 </div>
 
-<!-- lobby page -->
-
-
-
-<!-- create room page -->
-
 <div class="page create-room-page hidden" id="createroompage">
     <div class="card">
         <button class="menu-back-btn" id="create-back-home-btn">← Home</button>
@@ -110,7 +96,7 @@
 
         <div class="field">
             <label>Display Name</label>
-            <input type="text" id="create-displayname" placeholder="Your Name">
+            <input type="text" id="create-displayname" placeholder="Your name" maxlength="10">
         </div>
 
         <div class="field">
@@ -166,8 +152,6 @@
     </div>
 </div>
 
-<!-- create room page -->
-
 <div class="page help-page hidden" id="helppage">
     <div class="card">
         <h1>How to Play</h1>
@@ -181,18 +165,17 @@
         <ul class="help-list">
             <li><strong>Villager:</strong> No special night action. Use discussion and voting to find Wolves.</li>
             <li><strong>Wolf:</strong> At night, choose a non-Wolf player to eliminate.</li>
-            <li><strong>Seer:</strong> At night, inspect one player to learn their exact role.</li>
+            <li><strong>Seer:</strong> At night, inspect one player to learn if they are dangerous or innocent.You only have a limited number of inspections.</li>
             <li><strong>Healer:</strong> At night, choose one player to protect from the Wolf attack.</li>
-            <li><strong>Little Girl:</strong> At night, peek to see the Wolves, but there is a high chance they notice you.</li>
+            <li><strong>Little Girl:</strong> At night, peek to see the Wolves, but there is a 80% chance they notice you.</li>
             <li><strong>Artemis:</strong> At night, you may shoot one player or skip. Hit a Wolf and they die; hit an innocent and you die instead.</li>
+            <li><strong>Hidden mechanic:</strong> There is a 10 % chance of a non-wolf player to be bitten and turn into a Wolf.</li>
         </ul>
         <button class="primary" id="help-back-btn">Back</button>
     </div>
 </div>
 
 
-
-<!-- game page -->
 
 <div class="page game-page hidden" id="gamepage">
     <div class="intro-screen">
@@ -212,7 +195,7 @@
             <div class="card-inner" id="roleCard">
                 
                 <div class="card-face card-face-front transparent-face">
-                    <img src="/public/back_card.png" alt="Card Back" class="cover-image">
+                    <img src="./back_card.png" alt="Card Back" class="cover-image">
                 </div>
 
                 <div class="card-face card-face-back transparent-face">
@@ -225,11 +208,6 @@
     </div>
 </div>
 
-<!-- game page -->
-
-
-
-<!-- game messaging page  --> 
 <div class="page game-messaging-page hidden" id="gamemessagingpage">
     <h1 class="game-title discussion-title">Discussion Phase</h1>
     
@@ -243,7 +221,7 @@
             <div class="card-scene mini-card-scene">
                 <div class="card-inner flipped" id="discussionRoleCard">
                     <div class="card-face card-face-front transparent-face">
-                        <img src="/public/back_card.png" alt="Card Back" class="cover-image">
+                        <img src="./back_card.png" alt="Card Back" class="cover-image">
                     </div>
                     <div class="card-face card-face-back transparent-face">
                         <img id="messaging-role-image" src="" alt="Role" class="cover-image">
@@ -289,11 +267,6 @@
 
 
 </div>
-<!-- game messaging page  --> 
-
-
-<!-- day page  --> 
-
 <div class="page day-page hidden scene" id="daypage">
     <div class="backgroundDay"></div>
     <div class="skyDay"></div>
@@ -306,11 +279,6 @@
     </div>
 </div>
 
-<!-- day page  --> 
-
-
-
-<!-- night page  --> 
 <div class="page night-page hidden scene" id="nightpage">
     <div class="backgroundNight"></div>
     <div class="skyNight"></div>
@@ -335,10 +303,7 @@
     </div>
 </div>
 
-<!-- night page  --> 
-
-<!-- game over page  --> 
- <div class="page game-over-page hidden" id="gameoverpage">
+<div class="page game-over-page hidden" id="gameoverpage">
     <div class="phase-content">
         <h1 class="phase-title" id="game-over-title">GAME OVER</h1>
         <p id="game-over-message" class="phase-message"></p>
@@ -351,8 +316,6 @@
     </div>
 </div>
 
-<!-- game over page  -->
-
-<script type="module" src="/src/js_files/main.js"></script>
+<script type="module" src="./src/js_files/main.js"></script>
 </body>
-</html>-
+</html>

@@ -25,6 +25,21 @@
     letter-spacing: 2px;
 }
 
+.game-title.discussion-title {
+    font-family: 'Dalek', 'Cinzel', serif; 
+    font-size: 3.5rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #b8860b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 15px rgba(212, 175, 55, 0.5); 
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+
 .discussion-layout { 
     display: grid;
     grid-template-columns: 320px 1fr 380px;
@@ -198,9 +213,18 @@
 
 #discussionTimer {
     text-align: center;
-    font-size: 1.5rem;
-    color: var(--accent);
-    margin: 10px 0;
+    font-family: 'Cinzel', serif; 
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffd700;
+    margin: 0 0 20px 0;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+    animation: timerPulse 1.5s infinite alternate; 
+}
+
+@keyframes timerPulse {
+    from { opacity: 0.7; text-shadow: 0 0 5px rgba(212, 175, 55, 0.3); }
+    to { opacity: 1; text-shadow: 0 0 15px rgba(212, 175, 55, 0.9); }
 }
 
 #skipDiscussionBtn {

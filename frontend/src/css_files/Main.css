@@ -204,19 +204,100 @@ button {
     transition: all 0.2s ease;
 }
 
-    button.primary {
-        background: var(--accent);
-        color: white;
-    }
+button.primary {
+    background: var(--accent);
+    color: white;
+}
 
-    button:hover {
-        opacity: 0.9;
-        transform: translateY(-1px);
-    }
+button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* ============================= */
+/* Game Over Page Layout         */
+/* ============================= */
 
 .game-over-page {
     display: flex;
-    justify-content: center;
     align-items: center;
-    color: white;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(26, 10, 46, 0.9) 0%, rgba(45, 20, 68, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+}
+
+.game-over-page .phase-content {
+    background: linear-gradient(180deg, rgba(32, 12, 58, 0.95) 0%, rgba(18, 8, 38, 0.95) 100%);
+    padding: 50px 40px;
+    width: 100%;
+    max-width: 550px;
+    border-radius: 18px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8),
+                inset 0 0 30px rgba(0, 0, 0, 0.6);
+    position: relative;
+    animation: fadeInScale 0.6s ease-out forwards;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Enhances the title and makes it glow with whatever color JS gives it (Red or Green) */
+#game-over-title {
+    font-family: 'Dalek', 'Cinzel', serif;
+    font-size: 3.5rem;
+    margin: 0 0 15px 0;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 0 25px currentColor; /* Takes the Red/Green from JS and makes it glow! */
+}
+
+#game-over-message {
+    font-size: 1.35rem;
+    color: #e8dcc4;
+    margin: 10px 0 20px 0;
+    line-height: 1.6;
+    font-weight: 600;
+    min-height: 65px; /* Reserves space so the buttons don't jump around while the typewriter types */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* Make the auto-kick timer look like a glowing ancient clock */
+#game-over-timer-display {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    color: #d4af37 !important; /* Overrides the muted JS color to Gold */
+    margin-top: 25px !important;
+    margin-bottom: 15px;
+    animation: timerPulse 1.5s infinite alternate;
+}
+
+@keyframes timerPulse {
+    from { opacity: 0.6; text-shadow: 0 0 5px rgba(212, 175, 55, 0.2); }
+    to { opacity: 1; text-shadow: 0 0 15px rgba(212, 175, 55, 0.8); }
+}
+
+/* Button Layout overrides */
+.game-over-page div[style*="display: flex"] {
+    width: 100%;
+    margin-top: 10px !important;
+}
+
+.game-over-page button {
+    flex: 1; /* Makes both buttons perfectly even in width */
+}
+
+/* Restyle the Home button so it looks distinct from the Play Again button */
+#gameOverHomeBtn {
+    background: linear-gradient(180deg, #475569 0%, #334155 100%) !important;
+    color: #f8fafc;
+    border: 1px solid #1e293b !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
+}
+
+#gameOverHomeBtn:hover {
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6) !important;
 }
