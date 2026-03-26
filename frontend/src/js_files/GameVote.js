@@ -1,6 +1,7 @@
 import { showPage } from './ui.js';
 import { appendToGameChat } from './GameUtils.js';
 
+// Discussion phase voting UI + local elimination UX.
 export function setupVotingLogic(socket, gameState) {
     let discussionCountdownInterval = null;
 
@@ -8,9 +9,11 @@ export function setupVotingLogic(socket, gameState) {
     const closeVoteMenuBtn = document.getElementById('closeVoteMenuBtn');
     const votingOverlay = document.getElementById('votingOverlay');
 
+    // Open/close overlay menu that contains vote buttons.
     if (openVoteMenuBtn) openVoteMenuBtn.onclick = () => votingOverlay.classList.remove('hidden');
     if (closeVoteMenuBtn) closeVoteMenuBtn.onclick = () => votingOverlay.classList.add('hidden');
 
+    // Start discussion timer and render vote candidates from server list.
     socket.on('discussion-phase-started', data => {
         showPage('gamemessagingpage');
         
@@ -42,6 +45,7 @@ export function setupVotingLogic(socket, gameState) {
         
         if (openVoteMenuBtn) openVoteMenuBtn.disabled = false;
 
+        // Single vote row with running count + one-click vote action.
         const createVoteRow = (targetName, displayName) => {
             const row = document.createElement('div');
             row.className = 'vote-row';
@@ -131,6 +135,7 @@ export function setupVotingLogic(socket, gameState) {
             }
         }
 
+        // Show temporary elimination summary modal.
         showEliminationModal(data.name, data.voteCount);
     });
 

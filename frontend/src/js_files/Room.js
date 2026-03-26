@@ -2,6 +2,7 @@ import { showPage } from './ui.js';
 
 export function setupRoomLogic(socket, gameState) {
 
+  // Local error helpers (kept private to this module).
   function displayError(elementId, message) {
       const el = document.getElementById(elementId);
       if (el) {
@@ -15,6 +16,7 @@ export function setupRoomLogic(socket, gameState) {
       if (el) el.classList.add("hidden");
   }
 
+  // Navigation between home/join/create/help screens.
   document.getElementById("home-join-btn").addEventListener('click', () => showPage("joinpage"));
   document.getElementById("home-create-btn").addEventListener('click', () => showPage("createroompage"));
   document.getElementById("home-help-btn").addEventListener('click', () => showPage("helppage"));
@@ -41,11 +43,20 @@ export function setupRoomLogic(socket, gameState) {
       artemis: Number(document.getElementById("role-artemis").value) || 0
     };
     
+    // Balance rule: allow 2 wolves only in large lobbies (12+ players).
+    const maxWolvesAllowed = numberOfPlayers >= 12 ? 2 : 1;
     const totalSpecialRoles = rolesConfig.wolves + rolesConfig.seers + rolesConfig.healers + rolesConfig.littleGirls + rolesConfig.artemis;
     
     if (creatorName === "") return displayError("create-error", "Fields cannot be empty");
     if (creatorName.length > 10) return displayError("create-error", "Name must be 10 characters or less");
-    if (rolesConfig.wolves !== 1) return displayError("create-error", "You must have exactly 1 Wolf!");
+    if (rolesConfig.wolves < 1 || rolesConfig.wolves > maxWolvesAllowed) {
+      return displayError(
+        "create-error",
+        maxWolvesAllowed === 1
+          ? "For games under 12 players, you must have exactly 1 Wolf."
+          : "For 12+ players, you may have 1 or 2 Wolves."
+      );
+    }
     if (rolesConfig.littleGirls > 1) return displayError("create-error", "You can only have a maximum of 1 Little Girl.");
     if (totalSpecialRoles > numberOfPlayers) return displayError("create-error", `You selected ${totalSpecialRoles} roles for a ${numberOfPlayers} player game!`);
 
@@ -88,6 +99,7 @@ export function setupRoomLogic(socket, gameState) {
   });
 
   // --- SOCKET LISTENERS ---
+  // Created-room flow (host lands in lobby and can start the game).
   socket.on('room-created', (newRoomCode) => {
     document.getElementById("room-code-display").textContent = newRoomCode;
     gameState.currentRoom = newRoomCode;
@@ -108,6 +120,12 @@ export function setupRoomLogic(socket, gameState) {
     showPage("joinpage");
   });
 
+  socket.on('create-room-failed', (errorMessage) => {
+    displayError("create-error", errorMessage || "Unable to create room with this role setup.");
+    showPage("createroompage");
+  });
+
+  // Keep lobby player lists synchronized (lobby + in-game sidebar).
   socket.on('update-players', (playersArray) => {
     ['players-list', 'game-players-list'].forEach(id => {
         const list = document.getElementById(id);

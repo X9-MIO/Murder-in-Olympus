@@ -1,7 +1,9 @@
 import { showPage } from './ui.js';
 import { typeWriterEffect } from './GameUtils.js';
 
+// Handles pre-game intro animation and role-card reveal sequence.
 export function setupGameStart(socket, gameState) {
+    // Host-only Start Game button.
     const startGameBtn = document.getElementById("startgamebtn");
     if (startGameBtn) {
         startGameBtn.addEventListener('click', () => {
@@ -22,6 +24,7 @@ export function setupGameStart(socket, gameState) {
         });
     }
 
+    // Server broadcast indicating role assignment is complete and intro should begin.
     socket.on('game-starting', () => {
         showPage("gamepage"); 
 
@@ -36,6 +39,7 @@ export function setupGameStart(socket, gameState) {
         if (introScreen) introScreen.classList.remove("hidden");
         if (gameContent) gameContent.classList.add("hidden");
 
+        // Re-trigger CSS animations every round (including play-again).
         if (introMain) {
             introMain.classList.remove("typewriter");
             introMain.style.width = "0";

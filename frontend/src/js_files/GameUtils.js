@@ -1,3 +1,4 @@
+// Per-element typewriter animation helper.
 export function typeWriterEffect(element, text, speed = 40, callback) {
     if (element.typewriterInterval) clearInterval(element.typewriterInterval);
     element.textContent = ""; 
@@ -15,6 +16,7 @@ export function typeWriterEffect(element, text, speed = 40, callback) {
 }
 
 
+// Appends system-style messages to in-game chat panel.
 export function appendToGameChat(messageText) {
     const gameChatBox = document.getElementById('gameChatBox');
     if (!gameChatBox || !messageText.trim()) return;
@@ -23,6 +25,7 @@ export function appendToGameChat(messageText) {
     msgDiv.className = "chat-message";
     msgDiv.style.color = "#ffd700"; 
     msgDiv.style.fontFamily = "'Cinzel', serif";
+    msgDiv.style.fontWeight = "800";
     msgDiv.textContent = messageText;
     
     gameChatBox.appendChild(msgDiv);

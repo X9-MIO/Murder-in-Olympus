@@ -1,5 +1,6 @@
 import { appendToGameChat } from './GameUtils.js';
 
+// Role-driven client feedback: role cards, private results, and status modals.
 export function setupRoleLogic(socket, gameState) {
     socket.on('receive-role', (role) => {
         gameState.myRole = role; 
@@ -67,6 +68,7 @@ export function setupRoleLogic(socket, gameState) {
         });
     });
 
+    // Shared modal factory for one-off role feedback popups.
     const createModal = (id, titleText, messageText, color, btnText) => {
         const modal = document.createElement('div');
         modal.id = id;

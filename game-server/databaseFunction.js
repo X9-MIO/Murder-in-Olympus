@@ -1,6 +1,7 @@
 const db = require("./db");
 console.log("databaseFunctions.js loaded");
 
+// Thin data-access layer for rooms, players, chat, votes, and night actions.
 // Room functions
 function createRoom(roomCode, numberOfPlayers, creatorSocketId, roleConfig = null) {
   const configJson = roleConfig ? JSON.stringify(roleConfig) : null;

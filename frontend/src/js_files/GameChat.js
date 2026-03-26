@@ -23,6 +23,7 @@ export function setupGameChatLogic(socket, gameState) {
         "#5eead4"  
     ];
 
+    // Deterministic color from player name for readable chat identity.
     function getColorFromName(name) {
         if (name === "You") return "#a855f7";
         let hash = 0;
@@ -32,6 +33,7 @@ export function setupGameChatLogic(socket, gameState) {
         return olympianColors[Math.abs(hash % olympianColors.length)];
     }
 
+    // Formats messages as "name: message" when possible, fallback for system lines.
     function formatGameMessage(messageText) {
         if (!messageText?.trim()) return;
         
@@ -49,10 +51,19 @@ export function setupGameChatLogic(socket, gameState) {
             nameSpan.textContent = name + ": ";
             nameSpan.style.fontWeight = "bold";
             nameSpan.style.color = getColorFromName(name);
+
+            // Make narrator/system speaker labels stand out more.
+            if (name.toUpperCase().includes("NARRATOR")) {
+                nameSpan.style.fontWeight = "900";
+            }
             
             const textSpan = document.createElement("span");
             textSpan.textContent = text;
             textSpan.style.color = "#e8dcc4"; 
+
+            if (name.toUpperCase().includes("NARRATOR")) {
+                textSpan.style.fontWeight = "700";
+            }
 
             msgDiv.append(nameSpan, textSpan);
         } else {
@@ -60,6 +71,7 @@ export function setupGameChatLogic(socket, gameState) {
             msgDiv.style.color = "#ffd700"; 
             msgDiv.style.fontFamily = "'Cinzel', serif";
             msgDiv.style.fontSize = "1.1rem";
+            msgDiv.style.fontWeight = "800";
             msgDiv.style.textAlign = "center";
             msgDiv.style.padding = "10px";
             msgDiv.style.borderTop = "1px solid rgba(212, 175, 55, 0.2)";
@@ -70,6 +82,7 @@ export function setupGameChatLogic(socket, gameState) {
         gameChatBox.scrollTop = gameChatBox.scrollHeight;
     }
 
+    // Sends chat message to server and mirrors local "You:" copy instantly.
     function sendGameMessage() {
         const text = gameChatInput.value.trim();
         if (text && gameState.currentRoom) {

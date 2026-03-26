@@ -1,6 +1,7 @@
 import { showPage } from './ui.js';
 import { typeWriterEffect, appendToGameChat } from './GameUtils.js';
 
+// Day phase transition and client-side elimination state updates.
 export function setupGameDay(socket, gameState) {
     socket.on('night-actions-revealed', (data) => {
         showPage('daypage'); 
@@ -11,6 +12,7 @@ export function setupGameDay(socket, gameState) {
     
         appendToGameChat(data.message);
         
+        // Remove dead players locally and disable controls if current player died.
         if (data.eliminatedPlayers?.length > 0) {
             data.eliminatedPlayers.forEach(deadPlayer => {
                 if (deadPlayer === gameState.currentDisplayName) {

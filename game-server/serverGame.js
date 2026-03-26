@@ -2,8 +2,10 @@ const dbFns = require("./databaseFunction");
 const { runtimeRooms, getAlivePlayers, buildRoleList, buildVoteCount } = require("./serverState");
 const { startNightPhase, endVotingPhase } = require("./serverGamePhases");
 
+// In-game events: start game, cast day vote, submit night action.
 function setupGameEvents(io, socket) {
 
+    // Host-only game start: assign roles, notify clients, then transition to first night.
     socket.on("start-game", (roomCode) => {
         const room = dbFns.getRoom(roomCode);
         if (!room || room.creator_socket_id !== socket.id) return;
@@ -25,6 +27,7 @@ function setupGameEvents(io, socket) {
         setTimeout(() => { startNightPhase(io, roomCode); }, 17000);
     });
 
+    // Day vote from an alive player.
     socket.on("cast-vote", (roomCode, targetPlayerName) => {
         const room = dbFns.getRoom(roomCode);
         if (!room || room.game_phase !== "discussion") return;
@@ -48,6 +51,7 @@ function setupGameEvents(io, socket) {
         }
     });
 
+    // Night action submitted by alive players during night phase.
     socket.on("submit-night-action", (roomCode, actionData) => {
         const room = dbFns.getRoom(roomCode);
         if (!room || room.game_phase !== "night") return;
@@ -55,6 +59,7 @@ function setupGameEvents(io, socket) {
         const player = dbFns.getPlayerBySocket(socket.id);
         if (!player || player.eliminated) return;
 
+        // Seer gets immediate private feedback and spends one inspection charge.
         if (actionData.type === "seer-inspect" && player.role === "Seer") {
             if (player.inspections_left <= 0) {
                 return io.to(socket.id).emit("receive-message", "Your visions have faded. No inspections left.");
@@ -77,6 +82,7 @@ function setupGameEvents(io, socket) {
 
         dbFns.saveNightAction(roomCode, socket.id, player.display_name, player.role, actionData.type, actionData.target || null);
 
+        // Little Girl peeks wolves; wolves may be notified with a probability.
         if (actionData.type === "little-girl-peek" && player.role === "Little Girl") {
             const currentWolves = getAlivePlayers(roomCode).filter(p => p.role === "Wolf");
             const wolfNames = currentWolves.map(p => p.display_name);

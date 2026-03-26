@@ -2,6 +2,7 @@ const dbFns = require("./databaseFunction");
 const { runtimeRooms, createRuntimeRoom, getAlivePlayers, getAlivePlayerNames, buildVoteCount, majorityChoice } = require("./serverState");
 const { checkGameOver } = require("./serverGameWin");
 
+// Night phase setup: clear actions, push role-specific action prompts, and arm timeout.
 function startNightPhase(io, roomCode) {
   const room = dbFns.getRoom(roomCode);
   if (!room) return;
@@ -12,7 +13,7 @@ function startNightPhase(io, roomCode) {
 
   io.to(roomCode).emit("night-phase-started", { message: "Night falls. Everyone goes to sleep." });
 
-  // ADDED inspections_left HERE
+  // Build alive-player context once for this phase tick.
   const alivePlayers = getAlivePlayers(roomCode).map((p) => ({ 
       id: p.socket_id, 
       name: p.display_name, 
@@ -29,7 +30,7 @@ function startNightPhase(io, roomCode) {
   const allNames = alivePlayers.map((p) => p.name);
   const nonWolfNames = alivePlayers.filter((p) => p.role !== "Wolf").map((p) => p.name);
 
-  // CHANGED THE SEER LOGIC HERE
+  // Seers can only act while they still have inspections remaining.
   seers.forEach(seer => {
       if (seer.inspections_left > 0) {
           io.to(seer.id).emit("night-action-required", { 
@@ -51,6 +52,7 @@ function startNightPhase(io, roomCode) {
   }, 20000); 
 }
 
+// Resolve all submitted night actions, apply deaths/saves, and transition state.
 function revealNightActions(io, roomCode) {
   const room = dbFns.getRoom(roomCode);
   if (!room) return;
@@ -99,6 +101,7 @@ function revealNightActions(io, roomCode) {
   const aliveAfterNight = dbFns.getAlivePlayers(roomCode);
   const aliveNonWolves = aliveAfterNight.filter(p => p.role !== "Wolf");
 
+  // Hidden mechanic: 10% chance a random non-wolf is infected into Wolf role.
   if (aliveNonWolves.length > 0 && Math.random() < 0.10) {
      const turnedPlayer = aliveNonWolves[Math.floor(Math.random() * aliveNonWolves.length)];
      dbFns.assignRole(turnedPlayer.socket_id, "Wolf");
@@ -118,6 +121,7 @@ function revealNightActions(io, roomCode) {
   setTimeout(() => { startDiscussionPhase(io, roomCode); }, 10000);
 }
 
+// Start daytime discussion/voting timer.
 function startDiscussionPhase(io, roomCode) {
   const room = dbFns.getRoom(roomCode);
   if (!room) return;
@@ -132,6 +136,7 @@ function startDiscussionPhase(io, roomCode) {
   }, 2000);
 }
 
+// Tally votes, eliminate result (or skip on tie), then check win condition.
 function endVotingPhase(io, roomCode) {
   const room = dbFns.getRoom(roomCode);
   if (!room) return;

@@ -1,9 +1,11 @@
 import { showPage } from './ui.js';
 import { typeWriterEffect } from './GameUtils.js';
 
+// Game-over presentation, countdown, and replay/reset behavior.
 export function setupGameOver(socket, gameState) {
     let gameOverCountdownInterval = null;
 
+    // Show winner banner + auto-return countdown.
     socket.on('game-over', (data) => {
         showPage('gameoverpage');
         const title = document.getElementById('game-over-title');
@@ -45,6 +47,7 @@ export function setupGameOver(socket, gameState) {
     const backToLobbyBtn = document.getElementById('backToLobbyBtn');
     if (backToLobbyBtn) {
         backToLobbyBtn.onclick = () => {
+            // Request room reset and return to lobby flow.
             if (gameOverCountdownInterval) clearInterval(gameOverCountdownInterval); 
             socket.emit('play-again', gameState.currentRoom); 
         };
@@ -63,6 +66,7 @@ export function setupGameOver(socket, gameState) {
         };
     }
 
+    // Room reset is broadcast to all room members after play-again.
     socket.on('room-reset', () => {
         showPage('lobby');
         const mainChatBox = document.querySelector(".chat-box");

@@ -1,8 +1,23 @@
 const dbFns = require("./databaseFunction");
 const { socketToUser, runtimeRooms, createUniqueRoomCode, createRuntimeRoom } = require("./serverState");
 
+// Room/lobby-only events (create, join, kick, and play-again reset).
 function setupRoomEvents(io, socket) {
+  // Host creates a room and becomes first player.
   socket.on("create-room", (numberOfPlayer, creatorname, roleConfig = null) => {
+    // Server-side guard: never trust client-side role validation.
+    const wolves = Number(roleConfig?.wolves || 0);
+    const maxWolvesAllowed = Number(numberOfPlayer) >= 12 ? 2 : 1;
+    if (wolves < 1 || wolves > maxWolvesAllowed) {
+      socket.emit(
+        "create-room-failed",
+        maxWolvesAllowed === 1
+          ? "For games under 12 players, you must have exactly 1 Wolf."
+          : "For 12+ players, you may have 1 or 2 Wolves."
+      );
+      return;
+    }
+
     const code = createUniqueRoomCode();
     dbFns.createRoom(code, numberOfPlayer, socket.id, roleConfig);
     dbFns.addPlayer(code, socket.id, creatorname, 1);
@@ -21,6 +36,7 @@ function setupRoomEvents(io, socket) {
     io.to(code).emit("update-players", players);
   });
 
+  // Lightweight availability check before join request.
   socket.on("check-if-room-exists", (roomCode, requestedName) => {
     const room = dbFns.getRoom(roomCode);
     if (!room) return socket.emit("RoomCheck", "not-found");
@@ -36,6 +52,7 @@ function setupRoomEvents(io, socket) {
     socket.emit("RoomCheck", "exists");
   });
 
+  // Join an existing lobby room (never mid-game).
   socket.on("join-room", (roomCode, displayName) => {
     const room = dbFns.getRoom(roomCode);
     if (!room || room.game_phase !== "lobby") return;
@@ -59,6 +76,7 @@ function setupRoomEvents(io, socket) {
     io.to(roomCode).emit("update-players", updatedPlayers);
   });
 
+  // Host can remove players while room is still in lobby phase.
   socket.on("kick-player", (roomCode, targetSocketId) => {
     const room = dbFns.getRoom(roomCode);
     
@@ -80,6 +98,7 @@ function setupRoomEvents(io, socket) {
     }
   });
 
+  // Reset match state after game over and return all players to lobby state.
   socket.on("play-again", (roomCode) => {
     const room = dbFns.getRoom(roomCode);
     if (!room) return;
@@ -93,7 +112,7 @@ function setupRoomEvents(io, socket) {
       dbFns.resetRoomForNewGame(roomCode);
     }
 
-    socket.emit("room-reset");
+    io.to(roomCode).emit("room-reset");
     const players = dbFns.getPlayers(roomCode).map((p) => ({
       display_name: p.display_name,
       socket_id: p.socket_id

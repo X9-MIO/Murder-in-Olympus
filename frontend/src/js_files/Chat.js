@@ -1,5 +1,6 @@
 // src/js_files/Chat.js
 
+// Lobby chat only (before game starts).
 export function setupChatLogic(socket, gameState) {
     const chatBox = document.querySelector(".chat-box");
     const chatInput = document.getElementById("chatInput");
@@ -23,6 +24,7 @@ export function setupChatLogic(socket, gameState) {
         "#5eead4"  
     ];
 
+    // Stable name -> color mapping for readable chat identities.
     function getColorFromName(name) {
         if (name === "You") return "#a855f7"; 
         
@@ -34,6 +36,7 @@ export function setupChatLogic(socket, gameState) {
         return olympianColors[index];
     }
 
+    // Render plain system lines or split "name: text" messages.
     function displayMessage(messageText) {
         if (!messageText?.trim()) return; 
         
@@ -68,6 +71,7 @@ export function setupChatLogic(socket, gameState) {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
+    // Send and immediately mirror local message as "You:".
     function sendMessage() {
         const text = chatInput.value.trim();
         if(!text) return;

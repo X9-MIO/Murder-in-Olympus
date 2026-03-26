@@ -1,9 +1,11 @@
 import { showPage } from './ui.js';
 import { typeWriterEffect } from './GameUtils.js';
 
+// Night phase UI: prompts, action buttons, and per-phase timer display.
 export function setupGameNight(socket, gameState) {
     let nightCountdownInterval = null;
 
+    // General night transition message for all players.
     socket.on('night-phase-started', (data) => {
         showPage('nightpage'); 
         const nightMsg = document.getElementById('night-message-text');
@@ -14,6 +16,7 @@ export function setupGameNight(socket, gameState) {
         if(waitingText) waitingText.classList.remove('hidden');
     });
 
+    // Role-specific action prompt from server.
     socket.on('night-action-required', (data) => {
         const nightMsg = document.getElementById('night-message-text');
         if (nightMsg) typeWriterEffect(nightMsg, data.message, 40);        
@@ -26,6 +29,7 @@ export function setupGameNight(socket, gameState) {
         if(waitingText) waitingText.classList.add('hidden');
         if(nightTimer) nightTimer.classList.remove('hidden');
         
+        // Rebuild target list each time a new night action is requested.
         actionContainer.innerHTML = '';
         data.targets.forEach(targetName => {
             const btn = document.createElement('button');
@@ -34,6 +38,7 @@ export function setupGameNight(socket, gameState) {
             btn.style.cssText = "display: block; width: 100%; margin: 10px 0; padding: 15px; font-size: 1.2rem; background: var(--bg); border: 2px solid var(--accent); color: var(--text); border-radius: 8px; cursor: pointer; transition: 0.3s;";
             
             btn.onclick = () => {
+                // Prevent duplicate submissions from same client click path.
                 document.querySelectorAll('.night-target-btn').forEach(b => b.disabled = true);
                 btn.textContent = "Revealing...";
                 

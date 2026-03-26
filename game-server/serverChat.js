@@ -1,6 +1,7 @@
 const dbFns = require("./databaseFunction");
 const { socketToUser } = require("./serverState");
 
+// Handles room chat messages (alive players only).
 function setupChatEvents(io, socket) {
   socket.on("send-message", (roomCode, message) => {
     const user = socketToUser[socket.id];
