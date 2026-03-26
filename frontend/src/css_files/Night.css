@@ -19,13 +19,13 @@
 
 .sunNight, .moonNight {
     position: absolute;
-    top: 16%;
+    top: 9%;
     left: 46%;
     width: 10%;
     height: 10%;
     background-position: center;
     background-size: cover;
-    transform-origin: 5vw 35vh;
+    transform-origin: 5vw 28vh;
 }
 
 
@@ -35,7 +35,7 @@
 }
 
 .backgroundNight {
-    background-image: url("/public/backdrop4.png");
+    background-image: url("/public/background.png");
     z-index: -1;
 }
 

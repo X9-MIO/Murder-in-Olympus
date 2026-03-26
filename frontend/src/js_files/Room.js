@@ -150,9 +150,8 @@ export function setupRoomLogic(socket, gameState) {
             nameSpan.style.textOverflow = "ellipsis";
             nameSpan.style.maxWidth = "130px";
 
-            // Add a Crown to the Host's name
+            // Highlight host name without icon.
             if (gameState.isHost && name === gameState.currentDisplayName) {
-                nameSpan.textContent = "👑 " + name; // Fixed Crown!
                 nameSpan.style.color = "#d4af37";
                 nameSpan.style.fontWeight = "bold";
             }
