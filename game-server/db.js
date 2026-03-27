@@ -37,6 +37,24 @@ db.prepare(`
   )
 `).run();
 
+// Migration guard: older databases may not have `inspections_left` yet.
+const playerColumns = db.prepare(`PRAGMA table_info(players)`).all();
+const hasInspectionsLeft = playerColumns.some((col) => col.name === "inspections_left");
+
+if (!hasInspectionsLeft) {
+  db.prepare(`
+    ALTER TABLE players
+    ADD COLUMN inspections_left INTEGER NOT NULL DEFAULT 2
+  `).run();
+}
+
+// Backfill any unexpected null/invalid values.
+db.prepare(`
+  UPDATE players
+  SET inspections_left = 2
+  WHERE inspections_left IS NULL
+`).run();
+
 // 3. Messages
 db.prepare(`
   CREATE TABLE IF NOT EXISTS messages (

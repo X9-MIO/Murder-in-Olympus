@@ -18,7 +18,7 @@ function startNightPhase(io, roomCode) {
       id: p.socket_id, 
       name: p.display_name, 
       role: p.role,
-      inspections_left: p.inspections_left 
+      inspections_left: Number.isFinite(Number(p.inspections_left)) ? Number(p.inspections_left) : 2
   }));
   
   const wolves = alivePlayers.filter((p) => p.role === "Wolf");

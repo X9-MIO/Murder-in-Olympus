@@ -61,7 +61,7 @@ function resetRoomForNewGame(roomCode) {
 
   db.prepare(`
     UPDATE players
-    SET role = 'Villager', eliminated = 0
+    SET role = 'Villager', eliminated = 0, inspections_left = 2
     WHERE room_code = ?
   `).run(roomCode);
 
